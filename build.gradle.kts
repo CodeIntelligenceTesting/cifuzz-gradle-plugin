@@ -11,3 +11,8 @@ gradlePlugin {
         implementationClass = "com.code_intelligence.cifuzz.CIFuzzPlugin"
     }
 }
+
+testing.suites.named<JvmTestSuite>("test") {
+    useJUnitJupiter()
+}
+
