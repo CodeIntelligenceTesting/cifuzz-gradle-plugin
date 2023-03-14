@@ -1,5 +1,7 @@
 package com.code_intelligence.cifuzz
 
+import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
+import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSetContainer
@@ -20,30 +22,25 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
         val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
 
-        project.tasks.register("printClasspath") {
-            it.doLast {
-                println("cifuzz.test.classpath=${sourceSets.getByName("test").runtimeClasspath.asPath}")
-            }
+        project.tasks.register("printClasspath", ClasspathPrinter::class.java) { printClasspath ->
+            printClasspath.runtimeClasspath.from(sourceSets.getByName("test").runtimeClasspath)
         }
 
-        project.tasks.register("printBuildDir") {
-            it.doLast {
-                println("cifuzz.test.buildDir=${project.layout.buildDirectory.get()}")
-            }
+        project.tasks.register("printBuildDir", BuildDirectoryPrinter::class.java) { printBuildDir ->
+            printBuildDir.buildDirectory.set(project.layout.buildDirectory.map { it.asFile.absolutePath })
         }
 
-        val cifuzzTest = project.tasks.register("cifuzzTest", Test::class.java) { cifuzzTest ->
-            cifuzzTest.useJUnitPlatform()
-            cifuzzTest.ignoreFailures = true
-            // disable jazzer hooks because they are not needed for coverage runs
-            cifuzzTest.jvmArgs("-Djazzer.hooks=false")
+        val fuzzTestProperty = project.providers.gradleProperty("cifuzz.fuzztest")
+        if (fuzzTestProperty.isPresent) {
+            project.tasks.withType(Test::class.java).configureEach { testTask ->
+                testTask.ignoreFailures = true
+                // disable jazzer hooks because they are not needed for coverage runs
+                testTask.jvmArgs("-Djazzer.hooks=false")
 
-            val jacoco = cifuzzTest.extensions.getByType(JacocoTaskExtension::class.java)
-            jacoco.setDestinationFile(project.layout.buildDirectory.file("jacoco/cifuzz.exec").map { it.asFile })
-
-            cifuzzTest.filter { filter ->
-                val fuzzTest = project.providers.gradleProperty("cifuzz.fuzztest").getOrElse("*")
-                filter.includeTestsMatching(fuzzTest)
+                testTask.filter { filter ->
+                    val fuzzTest = fuzzTestProperty.get()
+                    filter.includeTestsMatching(fuzzTest)
+                }
             }
         }
 
@@ -53,8 +50,9 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         // we need to set the exec file output path explicitly to make sure we find
         // the file in the `cifuzzReport` tasks
         project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport ->
-            cifuzzReport.executionData(cifuzzTest.map { cifuzzTest ->
-                val jacoco = cifuzzTest.extensions.getByType(JacocoTaskExtension::class.java)
+            cifuzzReport.executionData(project.tasks.withType(Test::class.java).map { testTask ->
+                cifuzzReport.dependsOn(testTask)
+                val jacoco = testTask.extensions.getByType(JacocoTaskExtension::class.java)
                 jacoco.destinationFile!!
             })
             cifuzzReport.classDirectories.from(project.files(sourceSets.getByName("main").output))
