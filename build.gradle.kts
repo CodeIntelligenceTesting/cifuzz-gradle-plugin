@@ -8,8 +8,6 @@ group = "com.code-intelligence"
 gradlePlugin {
     plugins.create("cifuzz") {
         id = "$group.$name"
-        implementationClass = "com.code_intelligence.cifuzz.CifuzzPlugin"
+        implementationClass = "com.code_intelligence.cifuzz.CIFuzzPlugin"
     }
 }
-
-
