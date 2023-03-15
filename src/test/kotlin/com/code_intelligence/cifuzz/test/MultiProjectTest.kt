@@ -59,7 +59,7 @@ open class MultiProjectTest {
             .forwardOutput()
             .withPluginClasspath()
             .withProjectDir(File(projectDir, "module-c")) // location of 'cifuzz.yaml'
-            .withArguments(args.toList())
+            .withArguments(args.toList() + listOf("-s"))
             .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
                 if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
             }

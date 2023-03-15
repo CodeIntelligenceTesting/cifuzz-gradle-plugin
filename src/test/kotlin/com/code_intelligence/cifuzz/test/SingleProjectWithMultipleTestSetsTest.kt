@@ -52,7 +52,7 @@ open class SingleProjectWithMultipleTestSetsTest {
             .forwardOutput()
             .withPluginClasspath()
             .withProjectDir(projectDir)
-            .withArguments(args.toList())
+            .withArguments(args.toList() + listOf("-s"))
             .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
                 if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
             }
