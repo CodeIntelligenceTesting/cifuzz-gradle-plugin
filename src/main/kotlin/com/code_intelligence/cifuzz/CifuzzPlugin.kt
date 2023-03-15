@@ -18,6 +18,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.base.TestingExtension
 import org.gradle.testing.jacoco.plugins.JacocoCoverageReport
+import java.io.File
 
 abstract class CIFuzzPlugin : Plugin<Project> {
 
@@ -93,8 +94,9 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         project.tasks.register("printClasspath", ClasspathPrinter::class.java) { printClasspath ->
             val fuzzTestPath = project.providers.gradleProperty("cifuzz.fuzztest.path")
             val sourceSet = if (fuzzTestPath.isPresent) {
-                sourceSets.find { fuzzTestPath.get().startsWith(it.java.srcDirs.first().absolutePath) }
-                    ?: sourceSets.getByName("test")
+                sourceSets.find {
+                    File(fuzzTestPath.get()).startsWith(it.java.srcDirs.first().relativeTo(project.projectDir))
+                } ?: sourceSets.getByName("test")
             } else {
                 sourceSets.getByName("test")
             }
