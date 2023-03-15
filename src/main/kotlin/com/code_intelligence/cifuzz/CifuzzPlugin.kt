@@ -31,10 +31,6 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     private fun configureCIFuzz(project: Project) {
         project.plugins.apply("jacoco-report-aggregation")
 
-        val objects = project.objects
-        val testing = project.extensions.getByType(TestingExtension::class.java)
-        val reporting = project.extensions.getByType(ReportingExtension::class.java)
-
         val fuzzTestProperty = project.providers.gradleProperty("cifuzz.fuzztest")
 
         registerPrintBuildDir(project)
@@ -46,29 +42,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
         // We register own tasks for the report to avoid side effects on existing user tasks when overwriting config
         // values (like the output path).
-        reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
-            // project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
-            report.reportTask.configure { cifuzzReport ->
-                val codeCoverageResults = project.configurations.getByName("aggregateCodeCoverageReportResults")
-                cifuzzReport.executionData.setFrom(
-                    testing.suites.withType(JvmTestSuite::class.java).map {
-                        artifactsForTestType(codeCoverageResults, objects, it.testType)
-                    }
-                )
-
-                cifuzzReport.reports { reports ->
-                    val format = project.providers.gradleProperty("cifuzz.report.format").getOrElse("html")
-                    reports.html.required.set(format != "jacocoxml")
-                    reports.xml.required.set(true)
-
-                    val output = project.providers.gradleProperty("cifuzz.report.output")
-                    if (output.isPresent) {
-                        reports.html.outputLocation.set(output.map { project.layout.projectDirectory.dir("$it/html") })
-                        reports.xml.outputLocation.set(output.map { project.layout.projectDirectory.file("$it/jacoco.xml") })
-                    }
-                }
-            }
-        }
+        registerCoverageReportingTask(project)
     }
 
     private fun configureAllTestTasks(project: Project, fuzzTestFilter: String) {
@@ -101,6 +75,36 @@ abstract class CIFuzzPlugin : Plugin<Project> {
                 sourceSets.getByName("test")
             }
             printClasspath.testRuntimeClasspath.from(sourceSet.runtimeClasspath)
+        }
+    }
+
+    private fun registerCoverageReportingTask(project: Project) {
+        val objects = project.objects
+        val testing = project.extensions.getByType(TestingExtension::class.java)
+        val reporting = project.extensions.getByType(ReportingExtension::class.java)
+
+        reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
+            // project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
+            report.reportTask.configure { cifuzzReport ->
+                val codeCoverageResults = project.configurations.getByName("aggregateCodeCoverageReportResults")
+                cifuzzReport.executionData.setFrom(
+                    testing.suites.withType(JvmTestSuite::class.java).map {
+                        artifactsForTestType(codeCoverageResults, objects, it.testType)
+                    }
+                )
+
+                cifuzzReport.reports { reports ->
+                    val format = project.providers.gradleProperty("cifuzz.report.format").getOrElse("html")
+                    reports.html.required.set(format != "jacocoxml")
+                    reports.xml.required.set(true)
+
+                    val output = project.providers.gradleProperty("cifuzz.report.output")
+                    if (output.isPresent) {
+                        reports.html.outputLocation.set(output.map { project.layout.projectDirectory.dir("$it/html") })
+                        reports.xml.outputLocation.set(output.map { project.layout.projectDirectory.file("$it/jacoco.xml") })
+                    }
+                }
+            }
         }
     }
 
