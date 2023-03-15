@@ -4,7 +4,9 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -37,6 +39,19 @@ open class MultiProjectTest {
         assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:printClasspath")?.outcome)
         assertThat(result.output, containsString("build/classes/java/test"))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
+    }
+
+    @Test
+    fun `cifuzzReport produces xml coverage report`() {
+        val reportFile = File(projectDir, "module-c/build/reports/jacoco/cifuzzReport/cifuzzReport.xml")
+
+        val result = runner("cifuzzReport", "-Pcifuzz.fuzztest=org.example.c.test.ModuleCTest.testC").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzReport")?.outcome)
+        assertTrue(reportFile.exists())
+        assertThat(reportFile.readText(), containsString("""<class name="org/example/a/ModuleA" sourcefilename="ModuleA.java">"""))
+        assertThat(reportFile.readText(), containsString("""<class name="org/example/b/ModuleB" sourcefilename="ModuleB.java">"""))
+        assertThat(reportFile.readText(), containsString("""<class name="org/example/c/ModuleC" sourcefilename="ModuleC.java">"""))
     }
 
     private fun runner(vararg args: String): GradleRunner {
