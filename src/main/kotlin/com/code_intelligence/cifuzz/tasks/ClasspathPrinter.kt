@@ -8,11 +8,11 @@ import org.gradle.api.tasks.TaskAction
 abstract class ClasspathPrinter : DefaultTask() {
 
     @get:InputFiles
-    abstract val runtimeClasspath: ConfigurableFileCollection
+    abstract val testRuntimeClasspath: ConfigurableFileCollection
 
     @TaskAction
     fun print() {
-        println("cifuzz.test.classpath=${runtimeClasspath.asPath}")
+        println("cifuzz.test.classpath=${testRuntimeClasspath.asPath}")
     }
 
 }
