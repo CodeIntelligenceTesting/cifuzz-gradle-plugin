@@ -14,5 +14,8 @@ gradlePlugin {
 
 testing.suites.named<JvmTestSuite>("test") {
     useJUnitJupiter()
+    dependencies {
+        implementation("org.hamcrest:hamcrest:2.2")
+    }
 }
 
