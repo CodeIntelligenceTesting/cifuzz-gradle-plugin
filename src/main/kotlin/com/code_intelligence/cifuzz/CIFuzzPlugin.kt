@@ -4,20 +4,11 @@ import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
 import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.TestSuiteType
-import org.gradle.api.attributes.VerificationType
-import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.jvm.JvmTestSuite
-import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
-import org.gradle.testing.base.TestingExtension
 import org.gradle.testing.jacoco.plugins.JacocoCoverageReport
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import java.io.File
 
 abstract class CIFuzzPlugin : Plugin<Project> {
@@ -79,21 +70,18 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     }
 
     private fun registerCoverageReportingTask(project: Project) {
-        val objects = project.objects
-        val testing = project.extensions.getByType(TestingExtension::class.java)
+        // Possible alternative for older Gradle versions: project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
+
         val reporting = project.extensions.getByType(ReportingExtension::class.java)
 
         reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
-            // project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
+            report.testType.convention("undefined") // Gradle 7.x requires this to not fail test classpath resolution
             report.reportTask.configure { cifuzzReport ->
-                // TODO the below is Gradle 8 specific and uses low-level API - can we use 'cifuzz.fuzztest.path' as well and decide for only one 'testType'
-                // report.testType.set(testType-from-cifuzz.fuzztest.path)
-                val codeCoverageResults = project.configurations.getByName("aggregateCodeCoverageReportResults")
-                cifuzzReport.executionData.setFrom(
-                    testing.suites.withType(JvmTestSuite::class.java).map {
-                        artifactsForTestType(codeCoverageResults, objects, it.testType)
-                    }
-                )
+                val allTestTasks = project.tasks.withType(Test::class.java)
+                cifuzzReport.dependsOn(allTestTasks)
+                cifuzzReport.executionData.setFrom(allTestTasks.map { testTask ->
+                    testTask.extensions.getByType(JacocoTaskExtension::class.java).destinationFile!!
+                })
 
                 cifuzzReport.reports { reports ->
                     val format = project.providers.gradleProperty("cifuzz.report.format").getOrElse("html")
@@ -109,28 +97,4 @@ abstract class CIFuzzPlugin : Plugin<Project> {
             }
         }
     }
-
-    private fun artifactsForTestType(codeCoverageResults: Configuration, objects: ObjectFactory, testType: Provider<String>) =
-        codeCoverageResults.incoming.artifactView { view ->
-            view.withVariantReselection()
-            view.componentFilter { id -> id is ProjectComponentIdentifier }
-            view.attributes { attributes ->
-                attributes.attribute(
-                    Category.CATEGORY_ATTRIBUTE,
-                    objects.named(Category::class.java, Category.VERIFICATION)
-                )
-                attributes.attributeProvider(
-                    TestSuiteType.TEST_SUITE_TYPE_ATTRIBUTE,
-                    testType.map { objects.named(TestSuiteType::class.java, it) }
-                )
-                attributes.attribute(
-                    VerificationType.VERIFICATION_TYPE_ATTRIBUTE,
-                    objects.named(VerificationType::class.java, VerificationType.JACOCO_RESULTS)
-                )
-                attributes.attribute(
-                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                    ArtifactTypeDefinition.BINARY_DATA_TYPE
-                )
-            }
-        }.files
 }
