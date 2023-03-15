@@ -16,7 +16,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
-import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions
 import org.gradle.testing.base.TestingExtension
 import org.gradle.testing.jacoco.plugins.JacocoCoverageReport
 
@@ -48,7 +47,6 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         // values (like the output path).
         reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
             // project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
-            report.testType.set(TestSuiteType.UNIT_TEST)
             report.reportTask.configure { cifuzzReport ->
                 val codeCoverageResults = project.configurations.getByName("aggregateCodeCoverageReportResults")
                 cifuzzReport.executionData.setFrom(
@@ -74,15 +72,12 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
     private fun configureAllTestTasks(project: Project, fuzzTestFilter: String) {
         project.tasks.withType(Test::class.java).configureEach { testTask ->
-            // Only JUnit5 (== JUnitPlatform) tests support fuzzing
-            if (testTask.options is JUnitPlatformOptions) {
-                testTask.ignoreFailures = true
-                testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
-                // TODO filter by FuzzTest annotation
-                testTask.filter { filter ->
-                    filter.includeTestsMatching(fuzzTestFilter)
-                    filter.isFailOnNoMatchingTests = false
-                }
+            testTask.ignoreFailures = true
+            testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
+
+            testTask.filter { filter ->
+                filter.includeTestsMatching(fuzzTestFilter)
+                filter.isFailOnNoMatchingTests = false
             }
         }
     }
@@ -96,8 +91,14 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     private fun registerPrintClasspath(project: Project) {
         val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
         project.tasks.register("printClasspath", ClasspathPrinter::class.java) { printClasspath ->
-            // TODO which classpath do we use if there are multiple test sets?
-            printClasspath.testRuntimeClasspath.from(sourceSets.getByName("test").runtimeClasspath)
+            val fuzzTestPath = project.providers.gradleProperty("cifuzz.fuzztest.path")
+            val sourceSet = if (fuzzTestPath.isPresent) {
+                sourceSets.find { fuzzTestPath.get().startsWith(it.java.srcDirs.first().absolutePath) }
+                    ?: sourceSets.getByName("test")
+            } else {
+                sourceSets.getByName("test")
+            }
+            printClasspath.testRuntimeClasspath.from(sourceSet.runtimeClasspath)
         }
     }
 
