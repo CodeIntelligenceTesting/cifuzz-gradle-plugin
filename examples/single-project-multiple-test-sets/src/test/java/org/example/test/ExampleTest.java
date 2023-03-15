@@ -1,14 +1,14 @@
 package org.example.test;
 
-import com.code_intelligence.jazzer.junit.FuzzTest;
 import org.example.ExampleLib;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExampleTest {
 
-    @FuzzTest
-    public void testA(byte[] data) {
+    @Test
+    public void testA() {
         assertTrue(new ExampleLib().run());
     }
 }

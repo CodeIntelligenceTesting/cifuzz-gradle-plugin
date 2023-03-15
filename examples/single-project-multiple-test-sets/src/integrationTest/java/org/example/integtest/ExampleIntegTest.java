@@ -1,4 +1,4 @@
-package org.example.test.integtest;
+package org.example.integtest;
 
 import com.code_intelligence.jazzer.junit.FuzzTest;
 import org.example.ExampleApp;

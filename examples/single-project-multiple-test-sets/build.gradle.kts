@@ -5,9 +5,6 @@ plugins {
 
 testing.suites.named<JvmTestSuite>("test") {
     useJUnitJupiter()
-    dependencies {
-        implementation("com.code-intelligence:jazzer-junit:0.15.0")
-    }
 }
 
 testing.suites.register<JvmTestSuite>("integrationTest") {

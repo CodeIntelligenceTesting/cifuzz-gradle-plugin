@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ModuleATest {
 
     @Test
-    public void testA(byte[] data) {
+    public void testA() {
         assertTrue(new ModuleA().run());
     }
 }
