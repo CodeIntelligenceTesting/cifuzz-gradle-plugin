@@ -16,6 +16,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions
 import org.gradle.testing.base.TestingExtension
 import org.gradle.testing.jacoco.plugins.JacocoCoverageReport
 
@@ -57,10 +58,15 @@ abstract class CIFuzzPlugin : Plugin<Project> {
                 )
 
                 cifuzzReport.reports { reports ->
-                    // TODO Is the 'cifuzz.report.format' configuration needed?
                     val format = project.providers.gradleProperty("cifuzz.report.format").getOrElse("html")
                     reports.html.required.set(format != "jacocoxml")
                     reports.xml.required.set(true)
+
+                    val output = project.providers.gradleProperty("cifuzz.report.output")
+                    if (output.isPresent) {
+                        reports.html.outputLocation.set(output.map { project.layout.projectDirectory.dir("$it/html") })
+                        reports.xml.outputLocation.set(output.map { project.layout.projectDirectory.file("$it/jacoco.xml") })
+                    }
                 }
             }
         }
@@ -68,12 +74,15 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
     private fun configureAllTestTasks(project: Project, fuzzTestFilter: String) {
         project.tasks.withType(Test::class.java).configureEach { testTask ->
-            testTask.ignoreFailures = true
-            testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
-            // TODO filter by FuzzTest annotation
-            testTask.filter { filter ->
-                filter.includeTestsMatching(fuzzTestFilter)
-                filter.isFailOnNoMatchingTests = false
+            // Only JUnit5 (== JUnitPlatform) tests support fuzzing
+            if (testTask.options is JUnitPlatformOptions) {
+                testTask.ignoreFailures = true
+                testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
+                // TODO filter by FuzzTest annotation
+                testTask.filter { filter ->
+                    filter.includeTestsMatching(fuzzTestFilter)
+                    filter.isFailOnNoMatchingTests = false
+                }
             }
         }
     }
