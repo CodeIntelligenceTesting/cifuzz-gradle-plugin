@@ -20,6 +20,9 @@ open class SingleProjectWithMultipleTestSetsTest {
     @BeforeEach
     fun setup() {
         File("examples/single-project-multiple-test-sets").copyRecursively(projectDir)
+        File(projectDir, "settings.gradle.kts").let {
+            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
+        }
     }
 
     @Test

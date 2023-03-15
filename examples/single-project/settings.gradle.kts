@@ -1,6 +1,4 @@
-pluginManagement {
-    includeBuild("../../")
-}
+pluginManagement { includeBuild("../..") }
 
 dependencyResolutionManagement {
     repositories.mavenCentral()

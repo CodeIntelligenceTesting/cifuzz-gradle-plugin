@@ -19,6 +19,9 @@ open class SingleProjectTest {
     @BeforeEach
     fun setup() {
         File("examples/single-project").copyRecursively(projectDir)
+        File(projectDir, "settings.gradle.kts").let {
+            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
+        }
     }
 
     @Test

@@ -20,6 +20,9 @@ open class MultiProjectTest {
     @BeforeEach
     fun setup() {
         File("examples/multi-project").copyRecursively(projectDir)
+        File(projectDir, "settings.gradle.kts").let {
+            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
+        }
     }
 
     @Test
