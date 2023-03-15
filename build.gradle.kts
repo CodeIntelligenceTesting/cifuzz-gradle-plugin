@@ -19,3 +19,20 @@ testing.suites.named<JvmTestSuite>("test") {
     }
 }
 
+listOf("7.0.2", "7.4.2", "7.6.1").forEach { gradleVersionUnderTest ->
+    val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
+        group = "verification"
+        description = "Runs tests against Gradle $gradleVersionUnderTest"
+        testClassesDirs = sourceSets.test.get().output.classesDirs
+        classpath = sourceSets.test.get().runtimeClasspath
+        useJUnitPlatform()
+        systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
+    }
+    tasks.check {
+        dependsOn(testGradle)
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    maxParallelForks = 4
+}

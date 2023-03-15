@@ -47,11 +47,14 @@ open class SingleProjectWithMultipleTestSetsTest {
     }
 
     private fun runner(vararg args: String): GradleRunner {
+        val gradleVersionUnderTest: String? = System.getProperty("gradleVersionUnderTest")
         return GradleRunner.create()
             .forwardOutput()
             .withPluginClasspath()
             .withProjectDir(projectDir)
             .withArguments(args.toList())
-            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp"))
+            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
+                if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
+            }
     }
 }

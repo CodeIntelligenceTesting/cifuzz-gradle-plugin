@@ -86,6 +86,8 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
             // project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport -> }
             report.reportTask.configure { cifuzzReport ->
+                // TODO the below is Gradle 8 specific and uses low-level API - can we use 'cifuzz.fuzztest.path' as well and decide for only one 'testType'
+                // report.testType.set(testType-from-cifuzz.fuzztest.path)
                 val codeCoverageResults = project.configurations.getByName("aggregateCodeCoverageReportResults")
                 cifuzzReport.executionData.setFrom(
                     testing.suites.withType(JvmTestSuite::class.java).map {

@@ -4,7 +4,6 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -55,11 +54,14 @@ open class MultiProjectTest {
     }
 
     private fun runner(vararg args: String): GradleRunner {
+        val gradleVersionUnderTest: String? = System.getProperty("gradleVersionUnderTest")
         return GradleRunner.create()
             .forwardOutput()
             .withPluginClasspath()
             .withProjectDir(File(projectDir, "module-c")) // location of 'cifuzz.yaml'
             .withArguments(args.toList())
-            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp"))
+            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
+                if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
+            }
     }
 }
