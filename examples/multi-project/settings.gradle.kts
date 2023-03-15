@@ -1,5 +1,5 @@
 pluginManagement {
-    includeBuild("gradle/plugins")
+    includeBuild("../..")
 }
 
 dependencyResolutionManagement {

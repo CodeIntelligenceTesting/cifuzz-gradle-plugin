@@ -1,3 +1,8 @@
 plugins {
-    id("org.example.gradle.java-library")
+    id("java-library")
 }
+
+testing.suites.named<JvmTestSuite>("test") {
+    useJUnitJupiter()
+}
+
