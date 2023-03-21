@@ -21,6 +21,7 @@ abstract class CIFuzzPluginTest {
         File(projectDir, "settings.gradle.kts").let {
             it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
         }
+        runner("clean")
     }
 
     fun runner(vararg args: String): GradleRunner {
