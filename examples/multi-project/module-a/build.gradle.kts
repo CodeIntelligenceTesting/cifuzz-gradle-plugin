@@ -2,7 +2,11 @@ plugins {
     id("java-library")
 }
 
-testing.suites.named<JvmTestSuite>("test") {
-    useJUnitJupiter()
-}
+repositories.mavenCentral()
 
+tasks.test {
+    useJUnitPlatform()
+}
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+}
