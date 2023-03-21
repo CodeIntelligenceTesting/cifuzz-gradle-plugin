@@ -19,7 +19,7 @@ testing.suites.named<JvmTestSuite>("test") {
     }
 }
 
-listOf("6.0.1", "6.1.1", "7.0.2", "7.4.2", "7.5.1", "7.6.1").forEach { gradleVersionUnderTest ->
+listOf("6.1.1", "7.0.2", "7.4.2", "7.5.1", "7.6.1").forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"

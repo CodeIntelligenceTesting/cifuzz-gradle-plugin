@@ -20,9 +20,14 @@ import java.io.File
 @Suppress("unused")
 abstract class CIFuzzPlugin : Plugin<Project> {
 
+    private val isSupportedGradleVersion = GradleVersion.current() >= GradleVersion.version("6.1")
     private val isGradleVersionWithTestSuitesSupport = GradleVersion.current() >= GradleVersion.version("7.4")
 
     override fun apply(project: Project) {
+        if (!isSupportedGradleVersion) {
+            throw IllegalStateException("Plugin requires at least Gradle 6.1");
+        }
+
         project.plugins.withId("java") {
             configureCIFuzz(project)
         }
