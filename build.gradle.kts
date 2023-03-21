@@ -4,6 +4,7 @@ plugins {
 }
 
 group = "com.code-intelligence"
+version = "0.25.0-RC1"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(8))
