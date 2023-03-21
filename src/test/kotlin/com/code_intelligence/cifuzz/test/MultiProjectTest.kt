@@ -1,29 +1,19 @@
 package com.code_intelligence.cifuzz.test
 
-import org.gradle.testkit.runner.GradleRunner
+import com.code_intelligence.cifuzz.test.fixture.CIFuzzPluginTest
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.lang.management.ManagementFactory
 
-open class MultiProjectTest {
+class MultiProjectTest : CIFuzzPluginTest() {
 
-    @TempDir
-    private lateinit var projectDir: File
+    override fun example() = "multi-project"
 
-    @BeforeEach
-    fun setup() {
-        File("examples/multi-project").copyRecursively(projectDir)
-        File(projectDir, "settings.gradle.kts").let {
-            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
-        }
-    }
+    override fun cifuzzProjectDir() = File(projectDir, "module-c")
 
     @Test
     fun `printBuildDir task can be called`() {
@@ -54,17 +44,5 @@ open class MultiProjectTest {
         assertThat(reportFile.readText(), containsString("""<class name="org/example/a/ModuleA" sourcefilename="ModuleA.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/b/ModuleB" sourcefilename="ModuleB.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/c/ModuleC" sourcefilename="ModuleC.java">"""))
-    }
-
-    private fun runner(vararg args: String): GradleRunner {
-        val gradleVersionUnderTest: String? = System.getProperty("gradleVersionUnderTest")
-        return GradleRunner.create()
-            .forwardOutput()
-            .withPluginClasspath()
-            .withProjectDir(File(projectDir, "module-c")) // location of 'cifuzz.yaml'
-            .withArguments(args.toList() + listOf("-s"))
-            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
-                if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
-            }
     }
 }

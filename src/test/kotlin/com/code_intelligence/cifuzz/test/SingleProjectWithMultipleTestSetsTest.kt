@@ -1,29 +1,17 @@
 package com.code_intelligence.cifuzz.test
 
-import org.gradle.testkit.runner.GradleRunner
+import com.code_intelligence.cifuzz.test.fixture.CIFuzzPluginTest
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.lang.management.ManagementFactory
 
-open class SingleProjectWithMultipleTestSetsTest {
+class SingleProjectWithMultipleTestSetsTest : CIFuzzPluginTest() {
 
-    @TempDir
-    private lateinit var projectDir: File
-
-    @BeforeEach
-    fun setup() {
-        File("examples/single-project-multiple-test-sets").copyRecursively(projectDir)
-        File(projectDir, "settings.gradle.kts").let {
-            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
-        }
-    }
+    override fun example() = "single-project-multiple-test-sets"
 
     @Test
     fun `printClasspath task can be called with cifuzz-fuzztest-path`() {
@@ -47,17 +35,5 @@ open class SingleProjectWithMultipleTestSetsTest {
         Assertions.assertTrue(reportFile.exists())
         assertThat(reportFile.readText(), containsString("""<class name="org/example/ExampleLib" sourcefilename="ExampleLib.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/ExampleApp" sourcefilename="ExampleApp.java">"""))
-    }
-
-    private fun runner(vararg args: String): GradleRunner {
-        val gradleVersionUnderTest: String? = System.getProperty("gradleVersionUnderTest")
-        return GradleRunner.create()
-            .forwardOutput()
-            .withPluginClasspath()
-            .withProjectDir(projectDir)
-            .withArguments(args.toList() + listOf("-s"))
-            .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {
-                if (gradleVersionUnderTest != null) it.withGradleVersion(gradleVersionUnderTest)
-            }
     }
 }
