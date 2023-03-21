@@ -1,14 +1,12 @@
-name: "CI Build"
+name: "Publish release"
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - 'v*.*.*'
 
 jobs:
-  gradle-build:
+  release-build:
     runs-on: ubuntu-latest
     steps:
       - name: git clone
@@ -20,4 +18,7 @@ jobs:
           java-version: 11
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2.4.0
-      - run: "./gradlew :check --continue"
+      - run: "./gradlew :publishPlugin"
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
