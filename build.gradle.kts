@@ -5,6 +5,10 @@ plugins {
 
 group = "com.code-intelligence"
 
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
+}
+
 gradlePlugin {
     plugins.create("cifuzz") {
         id = "$group.$name"
