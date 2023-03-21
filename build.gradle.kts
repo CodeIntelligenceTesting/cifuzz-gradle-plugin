@@ -14,6 +14,11 @@ gradlePlugin {
     plugins.create("cifuzz") {
         id = "$group.$name"
         implementationClass = "com.code_intelligence.cifuzz.CIFuzzPlugin"
+        displayName = "cifuzz Gradle plugin"
+        description = "cifuzz is a CLI tool that helps you to integrate and run fuzzing based tests into your project."
+        website.set("https://www.code-intelligence.com")
+        vcsUrl.set("https://github.com/CodeIntelligenceTesting/cifuzz-gradle-plugin")
+        tags.addAll("cifuzz", "fuzz testing")
     }
 }
 
