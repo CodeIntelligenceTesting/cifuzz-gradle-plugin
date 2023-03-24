@@ -6,33 +6,24 @@ plugins {
 repositories.mavenCentral()
 
 /*
-testing.suites.named<JvmTestSuite>("test") {
-    useJUnitJupiter()
-}
-
-testing.suites.register<JvmTestSuite>("integrationTest") {
+testing.suites.register<JvmTestSuite>("fuzzTest") {
     dependencies {
         implementation(project(path))
-        implementation("com.code-intelligence:jazzer-junit:0.15.0")
     }
 }
 */
 
-tasks.test {
+val fuzzTest = sourceSets.create("fuzzTest")
+tasks.register<Test>(fuzzTest.name) {
+    classpath = fuzzTest.runtimeClasspath
+    testClassesDirs = fuzzTest.output.classesDirs
     useJUnitPlatform()
 }
 
-val integrationTest = sourceSets.create("integrationTest")
-tasks.register<Test>(integrationTest.name) {
-    classpath = integrationTest.runtimeClasspath
-    testClassesDirs = integrationTest.output.classesDirs
-    useJUnitPlatform()
+cifuzz {
+    testSourceSet.set(fuzzTest)
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
-
-    "integrationTestImplementation"(project(path))
-    "integrationTestImplementation"("org.junit.jupiter:junit-jupiter:5.9.2")
-    "integrationTestImplementation"("com.code-intelligence:jazzer-junit:0.15.0")
+    "fuzzTestImplementation"(project(path))
 }

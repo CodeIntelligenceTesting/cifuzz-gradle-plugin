@@ -7,7 +7,9 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
@@ -36,30 +38,61 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     private fun configureCIFuzz(project: Project) {
         val fuzzTestProperty = gradleProperty(project, "cifuzz.fuzztest")
 
+        val cifuzz = project.extensions.create("cifuzz", CIFuzzExtension::class.java)
+        val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
+
+        cifuzz.testSourceSet.convention(sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME))
+        cifuzz.testTask.convention(cifuzz.testSourceSet.map { sourceSet ->
+            project.tasks.named(sourceSet.name, Test::class.java)
+        })
+
         registerPrintBuildDir(project)
-        registerPrintClasspath(project)
+        registerPrintClasspath(project, cifuzz.testSourceSet)
+
+        addJazzerDependencies(project, cifuzz.testSourceSet)
 
         if (fuzzTestProperty != null) {
-            configureAllTestTasks(project, fuzzTestProperty)
+            configureTestTasks(project, cifuzz.testTask, fuzzTestProperty)
         }
 
         // We register own tasks for the report to avoid side effects on existing user tasks when overwriting config
         // values (like the output path).
         if (isGradleVersionWithTestSuitesSupport) {
-            registerCoverageReportingTask(project)
+            registerCoverageReportingTask(project, cifuzz.testTask)
         } else {
-            registerCoverageReportingTaskLegacy(project)
+            registerCoverageReportingTaskLegacy(project, cifuzz.testTask)
         }
     }
 
-    private fun configureAllTestTasks(project: Project, fuzzTestFilter: String) {
-        project.tasks.withType(Test::class.java).configureEach { testTask ->
-            testTask.ignoreFailures = true
-            testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
+    private fun addJazzerDependencies(project: Project, testSourceSet: Provider<SourceSet>) {
+        project.tasks.named("test", Test::class.java) {
+            if (testSourceSet.get().name == SourceSet.TEST_SOURCE_SET_NAME) {
+                it.useJUnitPlatform()
+            }
+        }
+        project.configurations.all { config ->
+            config.withDependencies { dependencySet ->
+                val sourceSet = testSourceSet.get()
+                if (config.name == sourceSet.implementationConfigurationName) {
+                    dependencySet.add(project.dependencies.create("com.code-intelligence:jazzer-junit:0.16.0"))
+                }
+                if (config.name == sourceSet.runtimeOnlyConfigurationName) {
+                    dependencySet.add(project.dependencies.create("org.junit.jupiter:junit-jupiter-engine"))
+                }
+            }
+        }
+    }
 
-            testTask.filter { filter ->
-                filter.includeTestsMatching(fuzzTestFilter)
-                filter.isFailOnNoMatchingTests = false
+    private fun configureTestTasks(project: Project, testTaskProvider: Provider<TaskProvider<Test>>, fuzzTestFilter: String) {
+        project.tasks.withType(Test::class.java).configureEach { testTask ->
+            if (testTask == testTaskProvider.get().get()) {
+                testTask.ignoreFailures = true
+                testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
+
+                testTask.filter { filter ->
+                    filter.includeTestsMatching(fuzzTestFilter)
+                    filter.isFailOnNoMatchingTests = false
+                }
             }
         }
     }
@@ -70,33 +103,24 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerPrintClasspath(project: Project) {
-        val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
+    private fun registerPrintClasspath(project: Project, testSourceSet: Provider<SourceSet>) {
         project.tasks.register("printClasspath", ClasspathPrinter::class.java) { printClasspath ->
-            val fuzzTestPath = gradleProperty(project, "cifuzz.fuzztest.path")
-            val sourceSet = if (fuzzTestPath != null) {
-                sourceSets.find {
-                    File(fuzzTestPath).startsWith(it.java.srcDirs.first().relativeTo(project.projectDir))
-                } ?: sourceSets.getByName("test")
-            } else {
-                sourceSets.getByName("test")
-            }
-            printClasspath.testRuntimeClasspath.from(sourceSet.runtimeClasspath)
+            printClasspath.testRuntimeClasspath.from(testSourceSet.get().runtimeClasspath)
         }
     }
 
-    private fun registerCoverageReportingTask(project: Project) {
+    private fun registerCoverageReportingTask(project: Project, testTask: Provider<TaskProvider<Test>>) {
         project.plugins.apply("jacoco-report-aggregation")
 
         val reporting = project.extensions.getByType(ReportingExtension::class.java)
 
         reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
             report.testType.convention("undefined") // Gradle 7.x requires this to not fail test classpath resolution
-            configureJacocoReportTask(report.reportTask, project)
+            configureJacocoReportTask(project, report.reportTask, testTask)
         }
     }
 
-    private fun registerCoverageReportingTaskLegacy(project: Project) {
+    private fun registerCoverageReportingTaskLegacy(project: Project, testTask: Provider<TaskProvider<Test>>) {
         project.plugins.apply("jacoco")
 
         val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
@@ -120,16 +144,14 @@ abstract class CIFuzzPlugin : Plugin<Project> {
                 classFolder.map { File(it.asFile, "../../../../src/main/java") }
             })
         }
-        configureJacocoReportTask(reportTask, project)
+        configureJacocoReportTask(project, reportTask, testTask)
     }
 
-    private fun configureJacocoReportTask(reportTask: TaskProvider<JacocoReport>, project: Project) {
+    private fun configureJacocoReportTask(project: Project, reportTask: TaskProvider<JacocoReport>, testTask: Provider<TaskProvider<Test>>) {
         reportTask.configure { cifuzzReport ->
-            val allTestTasks = project.tasks.withType(Test::class.java)
-            cifuzzReport.dependsOn(allTestTasks)
-            cifuzzReport.executionData.setFrom(project.files(allTestTasks.map { testTask ->
+            cifuzzReport.executionData.from(testTask.get().map { testTask ->
                 testTask.extensions.getByType(JacocoTaskExtension::class.java).destinationFile!!
-            }).filter { it.exists() })
+            })
 
             cifuzzReport.reports { reports ->
                 val format = gradleProperty(project, "cifuzz.report.format") ?: "html"

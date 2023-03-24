@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class SingleProjectTest : CIFuzzPluginTest() {
 
-    override fun example() = "single-project-multiple-test-sets"
+    override fun example() = "single-project"
 
     @Test
     fun `printBuildDir task can be called`() {

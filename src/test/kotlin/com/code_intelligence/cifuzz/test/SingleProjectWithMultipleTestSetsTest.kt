@@ -15,22 +15,20 @@ class SingleProjectWithMultipleTestSetsTest : CIFuzzPluginTest() {
 
     @Test
     fun `printClasspath task can be called with cifuzz-fuzztest-path`() {
-        val pathToFuzzTest = "src/integrationTest/java/org/example/integtest/ExampleIntegTest.java"
-        val result = runner("printClasspath", "-q", "-Pcifuzz.fuzztest.path=${pathToFuzzTest}").build()
+        val result = runner("printClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":printClasspath")?.outcome)
-        assertThat(result.output, containsString("build/classes/java/integrationTest"))
+        assertThat(result.output, containsString("build/classes/java/fuzzTest"))
         assertThat(result.output, containsString("jazzer-junit"))
     }
 
     @Test
-    fun `cifuzzReport executes all test tasks and produces xml coverage report`() {
+    fun `cifuzzReport executes cifuzz test tasks and produces xml coverage report`() {
         val reportFile = File(projectDir, "build/reports/jacoco/cifuzzReport/cifuzzReport.xml")
 
-        val result = runner("cifuzzReport", "-Pcifuzz.fuzztest=org.example.integtest.ExampleIntegTest.testB").build()
+        val result = runner("cifuzzReport", "-Pcifuzz.fuzztest=org.example.fuzztest.ExampleFuzzTest.testB").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":test")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":integrationTest")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":fuzzTest")?.outcome)
 
         Assertions.assertTrue(reportFile.exists())
         assertThat(reportFile.readText(), containsString("""<class name="org/example/ExampleLib" sourcefilename="ExampleLib.java">"""))

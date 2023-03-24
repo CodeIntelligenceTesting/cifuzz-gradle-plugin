@@ -1,11 +1,11 @@
-package org.example.integtest;
+package org.example.fuzztest;
 
 import com.code_intelligence.jazzer.junit.FuzzTest;
 import org.example.ExampleApp;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ExampleIntegTest {
+public class ExampleFuzzTest {
 
     @FuzzTest
     public void testB(byte[] data) {
