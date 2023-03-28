@@ -30,18 +30,8 @@ You can then use the [cifuzz](https://github.com/CodeIntelligenceTesting/cifuzz)
 
 ## Configuration options
 
-
 By default, the plugin expects all fuzz tests to be in the default test sources set, which is usually located in `src/test`.
-If the tests are in a separate test source set – or test suite – you have to configure this as follows:
-
-```kotlin
-val fuzzTest = sourceSets.create("fuzzTest")
-// ... (Gradle setup for testing with the source set)
-
-cifuzz {
-    testSourceSet.set(fuzzTest)
-}
-```
+If the tests are in a separate test source set – or test suite – you have to configure that.
 
 If you use [test suites](https://docs.gradle.org/current/userguide/jvm_test_suite_plugin.html) (available since Gradle 7.4) you can do the configuration as follows:
 ```kotlin
@@ -50,3 +40,26 @@ testing.suites.register("fuzzTest", JvmTestSuite::class) {
     // ... (further configuration of the test suite)
 }
 ```
+
+If you create the test source set directly you can do a configuration like this.
+
+```kotlin
+val fuzzTest = sourceSets.create("fuzzTest")
+val fuzzTestTask = tasks.register("runFuzzTest", Test::class) {
+    classpath = fuzzTest.runtimeClasspath
+    testClassesDirs = fuzzTest.output.classesDirs
+    // ... (further configuration of the custom test task)
+}
+
+cifuzz {
+    testSourceSet.set(fuzzTest)
+    testTask.set(specialTestTask)
+}
+
+
+cifuzz {
+    testSourceSet.set(fuzzTest)
+    testTask.set(fuzzTestTask) // only needed if the test task name is different from the source set name
+}
+```
+
