@@ -1,6 +1,7 @@
 package com.code_intelligence.cifuzz
 
 import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
+import com.code_intelligence.cifuzz.tasks.PluginVersionPrinter
 import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -46,6 +47,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
             project.tasks.named(sourceSet.name, Test::class.java)
         })
 
+        registerPrintCIFuzzPluginVersion(project)
         registerPrintBuildDir(project)
         registerPrintClasspath(project, cifuzz.testSourceSet)
 
@@ -97,14 +99,18 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         }
     }
 
+    private fun registerPrintCIFuzzPluginVersion(project: Project) {
+        project.tasks.register("cifuzzPrintPluginVersion", PluginVersionPrinter::class.java)
+    }
+
     private fun registerPrintBuildDir(project: Project) {
-        project.tasks.register("printBuildDir", BuildDirectoryPrinter::class.java) { printBuildDir ->
+        project.tasks.register("cifuzzPrintBuildDir", BuildDirectoryPrinter::class.java) { printBuildDir ->
             printBuildDir.buildDirectory.set(project.layout.buildDirectory.map { it.asFile.absolutePath })
         }
     }
 
     private fun registerPrintClasspath(project: Project, testSourceSet: Provider<SourceSet>) {
-        project.tasks.register("printClasspath", ClasspathPrinter::class.java) { printClasspath ->
+        project.tasks.register("cifuzzPrintTestClasspath", ClasspathPrinter::class.java) { printClasspath ->
             printClasspath.testRuntimeClasspath.from(testSourceSet.get().runtimeClasspath)
         }
     }

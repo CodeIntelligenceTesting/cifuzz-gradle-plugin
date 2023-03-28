@@ -14,10 +14,10 @@ class SingleProjectWithMultipleTestSetsTest : CIFuzzPluginTest() {
     override fun example() = "single-project-multiple-test-sets"
 
     @Test
-    fun `printClasspath task can be called with cifuzz-fuzztest-path`() {
-        val result = runner("printClasspath", "-q").build()
+    fun `cifuzzPrintTestClasspath task can be called with cifuzz-fuzztest-path`() {
+        val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":printClasspath")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintTestClasspath")?.outcome)
         assertThat(result.output, containsString("build/classes/java/fuzzTest"))
         assertThat(result.output, containsString("jazzer-junit"))
     }

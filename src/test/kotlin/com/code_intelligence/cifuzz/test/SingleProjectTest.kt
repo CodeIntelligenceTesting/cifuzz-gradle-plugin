@@ -12,19 +12,27 @@ class SingleProjectTest : CIFuzzPluginTest() {
     override fun example() = "single-project"
 
     @Test
-    fun `printBuildDir task can be called`() {
-        val result = runner("printBuildDir", "-q").build()
+    fun `cifuzzPrintPluginVersion task can be called`() {
+        val result = runner("cifuzzPrintPluginVersion", "-q").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":printBuildDir")?.outcome)
-        assertThat(result.output, containsString("cifuzz.test.buildDir="))
+        assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintPluginVersion")?.outcome)
+        // assertThat(result.output, containsString("cifuzz.plugin.version=")) - no version in testkit mode
+    }
+
+    @Test
+    fun `cifuzzPrintBuildDir task can be called`() {
+        val result = runner("cifuzzPrintBuildDir", "-q").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintBuildDir")?.outcome)
+        assertThat(result.output, containsString("cifuzz.buildDir="))
         assertThat(result.output, containsString("/build\n"))
     }
 
     @Test
-    fun `printClasspath task can be called`() {
-        val result = runner("printClasspath", "-q").build()
+    fun `cifuzzPrintTestClasspath task can be called`() {
+        val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":printClasspath")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintTestClasspath")?.outcome)
         assertThat(result.output, containsString("build/classes/java/test"))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }

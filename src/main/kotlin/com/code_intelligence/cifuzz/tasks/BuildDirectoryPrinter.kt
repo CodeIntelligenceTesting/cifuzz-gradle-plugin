@@ -12,7 +12,7 @@ abstract class BuildDirectoryPrinter : DefaultTask() {
 
     @TaskAction
     fun print() {
-        println("cifuzz.test.buildDir=${buildDirectory.get()}")
+        println("cifuzz.buildDir=${buildDirectory.get()}")
     }
 
 }

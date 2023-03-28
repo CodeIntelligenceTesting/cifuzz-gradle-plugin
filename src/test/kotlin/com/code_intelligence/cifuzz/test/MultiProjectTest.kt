@@ -16,19 +16,19 @@ class MultiProjectTest : CIFuzzPluginTest() {
     override fun cifuzzProjectDir() = File(projectDir, "module-c")
 
     @Test
-    fun `printBuildDir task can be called`() {
-        val result = runner("printBuildDir", "-q").build()
+    fun `cifuzzPrintBuildDir task can be called`() {
+        val result = runner("cifuzzPrintBuildDir", "-q").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:printBuildDir")?.outcome)
-        assertThat(result.output, containsString("cifuzz.test.buildDir="))
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintBuildDir")?.outcome)
+        assertThat(result.output, containsString("cifuzz.buildDir="))
         assertThat(result.output, containsString("/module-c/build\n"))
     }
 
     @Test
-    fun `printClasspath task can be called`() {
-        val result = runner("printClasspath", "-q").build()
+    fun `cifuzzPrintTestClasspath task can be called`() {
+        val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:printClasspath")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintTestClasspath")?.outcome)
         assertThat(result.output, containsString("build/classes/java/test"))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }
