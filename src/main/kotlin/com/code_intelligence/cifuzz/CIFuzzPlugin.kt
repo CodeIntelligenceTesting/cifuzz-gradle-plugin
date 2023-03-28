@@ -7,7 +7,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.LibraryElements
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
@@ -30,153 +29,198 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         if (!isSupportedGradleVersion) {
-            throw IllegalStateException("Plugin requires at least Gradle 6.1");
+            throw IllegalStateException("Plugin requires at least Gradle 6.1")
         }
 
+        // The plugin relies on the 'java' plugin being applied first, which is implicitly applied by plugins like:
+        // 'application', 'java-library', 'groovy', 'scala', 'kotlin("jvm")', ...
         project.plugins.withId("java") {
-            configureCIFuzz(project)
+            project.configureCIFuzzPlugin()
         }
     }
+    private fun Project.configureCIFuzzPlugin() {
+        val fuzzTestProperty = gradleProperty("cifuzz.fuzztest")
+        
+        // Register extension for fine-tuning - can be used in 'build.gradle' files like this:
+        //   cifuzz {
+        //     testSourceSet.set(customFuzzTestSourceSet)
+        //     testTask.set(customFuzzTestTask)
+        //   }
+        val cifuzz = registerCIFuzzExtension()
+        
+        // Register cifuzz help tasks
+        registerPrintCIFuzzPluginVersion()
+        registerPrintBuildDir()
+        registerPrintClasspath(cifuzz.testSourceSet)
 
-    private fun configureCIFuzz(project: Project) {
-        val fuzzTestProperty = gradleProperty(project, "cifuzz.fuzztest")
+        // Automatically add dependencies to Jazzer
+        addJazzerDependencies(cifuzz.testSourceSet)
 
-        val cifuzz = project.extensions.create("cifuzz", CIFuzzExtension::class.java)
-        val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
-
-        cifuzz.testSourceSet.convention(sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME))
-        cifuzz.testTask.convention(cifuzz.testSourceSet.map { sourceSet ->
-            project.tasks.named(sourceSet.name, Test::class.java)
-        })
-
-        registerPrintCIFuzzPluginVersion(project)
-        registerPrintBuildDir(project)
-        registerPrintClasspath(project, cifuzz.testSourceSet)
-
-        addJazzerDependencies(project, cifuzz.testSourceSet)
-
+        // The test task selected for fuzz testing is only (re)configured when started through 'cifuzz' for coverage
+        // to keep normal Gradle test execution untouched.
         if (fuzzTestProperty != null) {
-            configureTestTasks(project, cifuzz.testTask, fuzzTestProperty)
+            reconfigureTestTasks(cifuzz.testTask, fuzzTestProperty)
         }
 
-        // We register own tasks for the report to avoid side effects on existing user tasks when overwriting config
+        // Register a custom JacocoReport task to avoid side effects on existing user tasks when overwriting config
         // values (like the output path).
         if (isGradleVersionWithTestSuitesSupport) {
-            registerCoverageReportingTask(project, cifuzz.testTask)
+            registerCoverageReportingTask(cifuzz.testTask)
         } else {
-            registerCoverageReportingTaskLegacy(project, cifuzz.testTask)
+            registerCoverageReportingTaskLegacy(cifuzz.testTask, cifuzz.testSourceSet)
         }
     }
 
-    private fun addJazzerDependencies(project: Project, testSourceSet: Provider<SourceSet>) {
-        project.configurations.all { config ->
-            config.withDependencies { dependencySet ->
-                val sourceSet = testSourceSet.get()
-                if (config.name == sourceSet.implementationConfigurationName) {
-                    dependencySet.add(project.dependencies.create("com.code-intelligence:jazzer-junit:$jazzerVersion"))
-                }
-                if (config.name == sourceSet.runtimeOnlyConfigurationName) {
-                    dependencySet.add(project.dependencies.create("org.junit.jupiter:junit-jupiter-engine"))
-                }
-            }
+    private fun Project.registerCIFuzzExtension() = extensions.create("cifuzz", CIFuzzExtension::class.java).apply {
+        val sourceSets = extensions.getByType(SourceSetContainer::class.java)
+        
+        testSourceSet.convention(sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME))
+        testTask.convention(testSourceSet.map { sourceSet -> tasks.named(sourceSet.name, Test::class.java) })
+    }
+    
+    private fun Project.registerPrintCIFuzzPluginVersion() {
+        tasks.register("cifuzzPrintPluginVersion", PluginVersionPrinter::class.java)
+    }
+
+    private fun Project.registerPrintBuildDir() {
+        tasks.register("cifuzzPrintBuildDir", BuildDirectoryPrinter::class.java) { printBuildDir ->
+            printBuildDir.buildDirectory.set(layout.buildDirectory.map { it.asFile.absolutePath })
         }
     }
 
-    private fun configureTestTasks(project: Project, testTaskProvider: Provider<TaskProvider<Test>>, fuzzTestFilter: String) {
-        project.tasks.withType(Test::class.java).configureEach { testTask ->
-            if (testTask == testTaskProvider.get().get()) {
-                testTask.useJUnitPlatform {
-                    it.includeTags = setOf(jazzerJUnit5TestTag)
-                }
-
-                testTask.ignoreFailures = true
-                testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
-
-                testTask.filter { filter ->
-                    filter.includeTestsMatching(fuzzTestFilter)
-                    filter.isFailOnNoMatchingTests = false
-                }
-            }
-        }
-    }
-
-    private fun registerPrintCIFuzzPluginVersion(project: Project) {
-        project.tasks.register("cifuzzPrintPluginVersion", PluginVersionPrinter::class.java)
-    }
-
-    private fun registerPrintBuildDir(project: Project) {
-        project.tasks.register("cifuzzPrintBuildDir", BuildDirectoryPrinter::class.java) { printBuildDir ->
-            printBuildDir.buildDirectory.set(project.layout.buildDirectory.map { it.asFile.absolutePath })
-        }
-    }
-
-    private fun registerPrintClasspath(project: Project, testSourceSet: Provider<SourceSet>) {
-        project.tasks.register("cifuzzPrintTestClasspath", ClasspathPrinter::class.java) { printClasspath ->
+    private fun Project.registerPrintClasspath(testSourceSet: Provider<SourceSet>) {
+        tasks.register("cifuzzPrintTestClasspath", ClasspathPrinter::class.java) { printClasspath ->
             printClasspath.testRuntimeClasspath.from(testSourceSet.get().runtimeClasspath)
         }
     }
 
-    private fun registerCoverageReportingTask(project: Project, testTask: Provider<TaskProvider<Test>>) {
-        project.plugins.apply("jacoco-report-aggregation")
-
-        val reporting = project.extensions.getByType(ReportingExtension::class.java)
-
-        reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
-            report.testType.convention("undefined") // Gradle 7.x requires this to not fail test classpath resolution
-            configureJacocoReportTask(project, report.reportTask, testTask)
+    private fun Project.addJazzerDependencies(testSourceSet: Provider<SourceSet>) {
+        configurations.all { configuration ->
+            // Use 'withDependencies { }' to access 'testSourceSet.get()' at the latest point possible.
+            configuration.withDependencies { dependencySet ->
+                val sourceSet = testSourceSet.get()
+                if (configuration.name == sourceSet.implementationConfigurationName) {
+                    // To write fuzz tests, add 'jazzer-junit' to 'implementation' scope of the selected source set.
+                    // Jazzer brings in the JUnit5 API with a defined version.
+                    dependencySet.add(dependencies.create("com.code-intelligence:jazzer-junit:$jazzerVersion"))
+                }
+                if (configuration.name == sourceSet.runtimeOnlyConfigurationName) {
+                    // To run the tests, add 'junit-jupiter-engine' to 'runtimeOnly' scope of the selected source set.
+                    // Add it without version - the version is automatically aligned with the JUnit 5 API.
+                    dependencySet.add(dependencies.create("org.junit.jupiter:junit-jupiter-engine"))
+                }
+            }
         }
     }
 
-    private fun registerCoverageReportingTaskLegacy(project: Project, testTask: Provider<TaskProvider<Test>>) {
-        project.plugins.apply("jacoco")
+    private fun Project.reconfigureTestTasks(testTaskProvider: Provider<TaskProvider<Test>>, fuzzTestFilter: String) {
+        tasks.withType(Test::class.java).configureEach { testTask ->
+            // Only configure the test task that runs the fuzz tests
+            if (testTask == testTaskProvider.get().get()) {
+                // The task needs to use JUnit5 (useJUnitPlatform) and should only run @FuzzTest Jazzer tests
+                // (and no normal @Test tests).
+                testTask.useJUnitPlatform {
+                    it.includeTags = setOf(jazzerJUnit5TestTag)
+                }
 
-        val main = project.extensions.getByType(SourceSetContainer::class.java).getByName("main")
+                testTask.ignoreFailures = true // Do not fail the build if a test fails
+                testTask.jvmArgs("-Djazzer.hooks=false") // disable Jazzer hooks as they are not needed for coverage
 
-        val reportTask = project.tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport ->
+                testTask.filter { filter ->
+                    filter.includeTestsMatching(fuzzTestFilter) // Only include the fuzz test(s) specified by 'cifuzz'
+                    filter.isFailOnNoMatchingTests = false // Do not fail the build if the test does not exist
+                }
+            }
+        }
+    }
+
+    private fun Project.registerCoverageReportingTask(testTask: Provider<TaskProvider<Test>>) {
+        plugins.apply("jacoco-report-aggregation") // This plugin was added in Gradle 7.4
+
+        val reporting = extensions.getByType(ReportingExtension::class.java)
+
+        // Register a new JacocoCoverageReport which will automatically add a task and configure it to pick up
+        // source code and classes from all dependencies, which is required in a multi-project setup.
+        reporting.reports.register("cifuzzReport", JacocoCoverageReport::class.java) { report ->
+            report.testType.convention("undefined") // Gradle 7.x requires this to not fail test classpath resolution
+            configureJacocoReportTask(report.reportTask, testTask)
+        }
+    }
+
+    private fun Project.registerCoverageReportingTaskLegacy(testTask: Provider<TaskProvider<Test>>,
+                                                            testSourceSet: Provider<SourceSet>) {
+        plugins.apply("jacoco")
+
+        val main = extensions.getByType(SourceSetContainer::class.java).getByName("main")
+
+        // Directly register a JacocoReport task, as JacocoCoverageReport (see above) is not available in Gradle
+        // versions older than 7.4.
+        val reportTask = tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport ->
+            val testRuntimeClasspath = configurations.getByName(testSourceSet.get().runtimeClasspathConfigurationName)
+
+            // Get access to all 'classes' folders (compiled code) of dependencies through dependency management.
             val classesFolders =
-                project.configurations.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME).incoming.artifactView { view ->
+                testRuntimeClasspath.incoming.artifactView { view ->
                     view.componentFilter { id -> id is ProjectComponentIdentifier }
                     view.attributes.attribute(
-                        LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, project.objects.named(
+                        LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(
                             LibraryElements::class.java, LibraryElements.CLASSES
                         )
                     )
                 }.files
 
+            // Add sources and classes (compiled code) from the CURRENT project
             cifuzzReport.classDirectories.from(main.output)
             cifuzzReport.sourceDirectories.from(main.java.srcDirs)
 
+            // Add sources and classes (compiled code) from other projects the project depends on
             cifuzzReport.classDirectories.from(classesFolders)
-            cifuzzReport.sourceDirectories.from(classesFolders.elements.map { classFolder ->
-                classFolder.map { File(it.asFile, "../../../../src/main/java") }
+            cifuzzReport.sourceDirectories.from(classesFolders.elements.map { classFolders ->
+                // Because the other projects do not always export their source code (before Gradle 7.4), we make the
+                // assumption that we can find it in a location relative to the classes.
+                classFolders.map {
+                    val classFolder = it.asFile
+                    val sourceSet = classFolder.name // usually 'main'
+                    val jvmLanguage = classFolder.parentFile.name // usually 'java'
+                    val projectRoot = classFolder.parentFile.parentFile.parentFile.parentFile
+                    File(projectRoot, "$sourceSet/$jvmLanguage")
+                }
             })
         }
-        configureJacocoReportTask(project, reportTask, testTask)
+
+        configureJacocoReportTask(reportTask, testTask)
     }
 
-    private fun configureJacocoReportTask(project: Project, reportTask: TaskProvider<JacocoReport>, testTask: Provider<TaskProvider<Test>>) {
+    private fun Project.configureJacocoReportTask(reportTask: TaskProvider<JacocoReport>,
+                                                  testTask: Provider<TaskProvider<Test>>) {
         reportTask.configure { cifuzzReport ->
+            // Take the execution data from the fuzz test task.
+            // This adds a dependency to the task so that it will run before and produce the data.
             cifuzzReport.executionData.from(testTask.get().map { testTask ->
                 testTask.extensions.getByType(JacocoTaskExtension::class.java).destinationFile!!
             })
 
             cifuzzReport.reports { reports ->
-                val format = gradleProperty(project, "cifuzz.report.format") ?: "html"
+                // Configure which reports are produced, which can be influenced by 'cifuzz' through a Gradle property.
+                val format = gradleProperty("cifuzz.report.format") ?: "html"
                 reports.html.required.set(format != "jacocoxml")
                 reports.xml.required.set(true)
 
-                val output = gradleProperty(project, "cifuzz.report.output")
+                // Configure where the reports go, which can be influenced by 'cifuzz' through a Gradle property.
+                val output = gradleProperty("cifuzz.report.output")
                 if (output != null) {
-                    reports.html.outputLocation.set(project.layout.projectDirectory.dir("$output/html"))
-                    reports.xml.outputLocation.set(project.layout.projectDirectory.file("$output/jacoco.xml"))
+                    reports.html.outputLocation.set(layout.projectDirectory.dir("$output/html"))
+                    reports.xml.outputLocation.set(layout.projectDirectory.file("$output/jacoco.xml"))
                 }
             }
         }
     }
 
-    private fun gradleProperty(project: Project, name: String): String? = if (isGradleVersionWithTestSuitesSupport) {
-        project.providers.gradleProperty(name).orNull
+    private fun Project.gradleProperty(name: String): String? = if (isGradleVersionWithTestSuitesSupport) {
+        providers.gradleProperty(name).orNull
     } else {
-        project.findProperty(name) as String?
+        // Fallback for older Gradle versions that either do not have 'Providers.gradleProperty' or require the
+        // now deprecated 'Provider.forUseAtConfigurationTime()'.
+        findProperty(name) as String?
     }
 }
