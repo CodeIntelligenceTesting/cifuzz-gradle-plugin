@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ModuleCTest {
 
     @FuzzTest
-    public void testC(byte[] data) {
+    public void fuzzTest(byte[] data) {
         assertTrue(new ModuleA().run());
         assertTrue(new ModuleC().run());
     }

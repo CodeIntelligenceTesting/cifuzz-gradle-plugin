@@ -25,6 +25,8 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
     private val isSupportedGradleVersion = GradleVersion.current() >= GradleVersion.version("6.1")
     private val isGradleVersionWithTestSuitesSupport = GradleVersion.current() >= GradleVersion.version("7.4")
+    private val jazzerVersion = "0.16.0"
+    private val jazzerJUnit5TestTag = "jazzer"
 
     override fun apply(project: Project) {
         if (!isSupportedGradleVersion) {
@@ -67,16 +69,11 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     }
 
     private fun addJazzerDependencies(project: Project, testSourceSet: Provider<SourceSet>) {
-        project.tasks.named("test", Test::class.java) {
-            if (testSourceSet.get().name == SourceSet.TEST_SOURCE_SET_NAME) {
-                it.useJUnitPlatform()
-            }
-        }
         project.configurations.all { config ->
             config.withDependencies { dependencySet ->
                 val sourceSet = testSourceSet.get()
                 if (config.name == sourceSet.implementationConfigurationName) {
-                    dependencySet.add(project.dependencies.create("com.code-intelligence:jazzer-junit:0.16.0"))
+                    dependencySet.add(project.dependencies.create("com.code-intelligence:jazzer-junit:$jazzerVersion"))
                 }
                 if (config.name == sourceSet.runtimeOnlyConfigurationName) {
                     dependencySet.add(project.dependencies.create("org.junit.jupiter:junit-jupiter-engine"))
@@ -88,6 +85,10 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     private fun configureTestTasks(project: Project, testTaskProvider: Provider<TaskProvider<Test>>, fuzzTestFilter: String) {
         project.tasks.withType(Test::class.java).configureEach { testTask ->
             if (testTask == testTaskProvider.get().get()) {
+                testTask.useJUnitPlatform {
+                    it.includeTags = setOf(jazzerJUnit5TestTag)
+                }
+
                 testTask.ignoreFailures = true
                 testTask.jvmArgs("-Djazzer.hooks=false") // disable jazzer hooks as they are not needed for coverage runs
 

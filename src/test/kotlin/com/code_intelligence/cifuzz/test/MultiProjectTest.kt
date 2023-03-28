@@ -4,6 +4,7 @@ import com.code_intelligence.cifuzz.test.fixture.CIFuzzPluginTest
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -44,5 +45,18 @@ class MultiProjectTest : CIFuzzPluginTest() {
         assertThat(reportFile.readText(), containsString("""<class name="org/example/a/ModuleA" sourcefilename="ModuleA.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/b/ModuleB" sourcefilename="ModuleB.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/c/ModuleC" sourcefilename="ModuleC.java">"""))
+    }
+
+    @Test
+    fun `cifuzzReport does not execute normal unit tests`() {
+        val reportFile = File(projectDir, "module-c/build/reports/tests/test/classes/org.example.c.test.ModuleCTest.html")
+
+        // ModuleCTest contains a @FuzzTest and a @Test
+        val result = runner("cifuzzReport", "-Pcifuzz.fuzztest=org.example.c.test.ModuleCTest").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzReport")?.outcome)
+        assertTrue(reportFile.exists())
+        assertThat(reportFile.readText(), containsString(""">fuzzTest(byte[])[1]<"""))
+        assertThat(reportFile.readText(), not(containsString(""">unitTest()<""")))
     }
 }
