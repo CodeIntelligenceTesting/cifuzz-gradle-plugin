@@ -41,7 +41,7 @@ testing.suites.register("fuzzTest", JvmTestSuite::class) {
 }
 ```
 
-If you create the test source set directly you can do a configuration like this.
+If you create the test source set directly you can do a configuration like this:
 
 ```kotlin
 val fuzzTest = sourceSets.create("fuzzTest")
@@ -53,13 +53,7 @@ val fuzzTestTask = tasks.register("runFuzzTest", Test::class) {
 
 cifuzz {
     testSourceSet.set(fuzzTest)
-    testTask.set(specialTestTask)
-}
-
-
-cifuzz {
-    testSourceSet.set(fuzzTest)
-    testTask.set(fuzzTestTask) // only needed if the test task name is different from the source set name
+    testTask.set(fuzzTestTask) // only if the task name is different from the source set name
 }
 ```
 
