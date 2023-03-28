@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.code-intelligence"
-version = "0.25.0-RC1"
+version = providers.gradleProperty("pluginVersion").getOrElse("dev")
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(8))
