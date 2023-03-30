@@ -75,7 +75,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         val sourceSets = extensions.getByType(SourceSetContainer::class.java)
         
         testSourceSet.convention(sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME))
-        testTask.convention(testSourceSet.map { sourceSet -> tasks.named(sourceSet.name, Test::class.java) })
+        testTask.convention(testSourceSet.flatMap { sourceSet -> tasks.named(sourceSet.name, Test::class.java) })
     }
     
     private fun Project.registerPrintCIFuzzPluginVersion() {
@@ -113,10 +113,10 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.reconfigureTestTasks(testTaskProvider: Provider<TaskProvider<Test>>, fuzzTestFilter: String) {
+    private fun Project.reconfigureTestTasks(testTaskProvider: Provider<Test>, fuzzTestFilter: String) {
         tasks.withType(Test::class.java).configureEach { testTask ->
             // Only configure the test task that runs the fuzz tests
-            if (testTask == testTaskProvider.get().get()) {
+            if (testTask == testTaskProvider.get()) {
                 // The task needs to use JUnit5 (useJUnitPlatform) and should only run @FuzzTest Jazzer tests
                 // (and no normal @Test tests).
                 testTask.useJUnitPlatform {
@@ -134,7 +134,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.registerCoverageReportingTask(testTask: Provider<TaskProvider<Test>>) {
+    private fun Project.registerCoverageReportingTask(testTask: Provider<Test>) {
         plugins.apply("jacoco-report-aggregation") // This plugin was added in Gradle 7.4
 
         val reporting = extensions.getByType(ReportingExtension::class.java)
@@ -147,7 +147,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         }
     }
 
-    private fun Project.registerCoverageReportingTaskLegacy(testTask: Provider<TaskProvider<Test>>,
+    private fun Project.registerCoverageReportingTaskLegacy(testTask: Provider<Test>,
                                                             testSourceSet: Provider<SourceSet>) {
         plugins.apply("jacoco")
 
@@ -192,11 +192,11 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     }
 
     private fun Project.configureJacocoReportTask(reportTask: TaskProvider<JacocoReport>,
-                                                  testTask: Provider<TaskProvider<Test>>) {
+                                                  testTask: Provider<Test>) {
         reportTask.configure { cifuzzReport ->
             // Take the execution data from the fuzz test task.
             // This adds a dependency to the task so that it will run before and produce the data.
-            cifuzzReport.executionData.from(testTask.get().map { testTask ->
+            cifuzzReport.executionData.from(testTask.map { testTask ->
                 testTask.extensions.getByType(JacocoTaskExtension::class.java).destinationFile!!
             })
 

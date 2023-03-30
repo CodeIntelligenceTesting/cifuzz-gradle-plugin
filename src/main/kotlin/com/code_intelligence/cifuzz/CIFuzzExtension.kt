@@ -2,7 +2,6 @@ package com.code_intelligence.cifuzz
 
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 
 /**
@@ -19,5 +18,5 @@ interface CIFuzzExtension {
     /**
      * Configures the task that executes the fuzz tests - defaults to the task with the same name as the source set.
      */
-    val testTask: Property<TaskProvider<Test>>
+    val testTask: Property<Test>
 }
