@@ -27,3 +27,11 @@ Pushing a version tag will trigger an automatic [release pipeline](https://githu
 
 The pipeline automatically releases the plugin to the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.code-intelligence.cifuzz).
 In case there are issues, you can log into the Gradle Plugin Portal with the Code Intelligence account and manage the released versions there.
+
+## How to handle a new Gradle release
+
+If a new Gradle version is released, do the following to update the plugin build and test with the additional Gradle version:
+
+- Assuming the new version is `8.1`, run the following command **twice**: `./gradlew wrapper --gradle-version=8.1`
+- The plugin now builds and tests against the new version. Make sure the tests are still passing: `./gradlew test`
+- Consider adding the **previous** version to the list of `testedGradleVersions` in [build.gradle.kts](build.gradle.kts).

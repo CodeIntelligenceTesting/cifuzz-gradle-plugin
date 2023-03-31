@@ -3,6 +3,9 @@ plugins {
     `embedded-kotlin`
 }
 
+// Versions to test in addition to the version used to build the plugin (gradle/wrapper/gradle-wrapper.properties)
+val testedGradleVersions = listOf("6.1.1", "7.0.2", "7.3.3", "7.4.2", "7.5.1", "7.6.1")
+
 group = "com.code-intelligence"
 version = providers.gradleProperty("pluginVersion").getOrElse("dev")
 
@@ -29,7 +32,7 @@ testing.suites.named<JvmTestSuite>("test") {
     }
 }
 
-listOf("6.1.1", "7.0.2", "7.4.2", "7.5.1", "7.6.1").forEach { gradleVersionUnderTest ->
+testedGradleVersions.forEach { gradleVersionUnderTest ->
     val testGradle = tasks.register<Test>("testGradle$gradleVersionUnderTest") {
         group = "verification"
         description = "Runs tests against Gradle $gradleVersionUnderTest"
