@@ -196,7 +196,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         reportTask.configure { cifuzzReport ->
             // Take the execution data from the fuzz test task.
             // This adds a dependency to the task so that it will run before and produce the data.
-            cifuzzReport.executionData.from(testTask.map { testTask ->
+            cifuzzReport.executionData.setFrom(testTask.map { testTask ->
                 testTask.extensions.getByType(JacocoTaskExtension::class.java).destinationFile!!
             })
 
