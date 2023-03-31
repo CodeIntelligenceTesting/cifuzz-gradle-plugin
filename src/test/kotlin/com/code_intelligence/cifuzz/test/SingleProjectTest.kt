@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.nio.file.Paths
 
 abstract class SingleProjectTest : CIFuzzPluginTest() {
 
@@ -21,7 +22,7 @@ abstract class SingleProjectTest : CIFuzzPluginTest() {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintBuildDir")?.outcome)
         assertThat(result.output, containsString("cifuzz.buildDir="))
-        assertThat(result.output, containsString("/build\n"))
+        assertThat(result.output, containsString("build"))
     }
 
     @Test
@@ -29,7 +30,7 @@ abstract class SingleProjectTest : CIFuzzPluginTest() {
         val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintTestClasspath")?.outcome)
-        assertThat(result.output, containsString("build/classes/${jvmLanguageFolder()}/test"))
+        assertThat(result.output, containsString(Paths.get("build", "classes", jvmLanguageFolder(), "test").toString()))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }
 

@@ -8,17 +8,18 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.nio.file.Paths
 
 class SingleProjectWithMultipleTestSetsTest : CIFuzzPluginTest() {
 
     override fun example() = "single-project-multiple-test-sets"
 
     @Test
-    fun `cifuzzPrintTestClasspath task can be called with cifuzz-fuzztest-path`() {
+    fun `cifuzzPrintTestClasspath task can be called for a test in another source set`() {
         val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":cifuzzPrintTestClasspath")?.outcome)
-        assertThat(result.output, containsString("build/classes/java/fuzzTest"))
+        assertThat(result.output, containsString(Paths.get("build", "classes", "java", "fuzzTest").toString()))
         assertThat(result.output, containsString("jazzer-junit"))
     }
 

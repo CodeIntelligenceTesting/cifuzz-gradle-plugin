@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.nio.file.Paths
 
 class MultiProjectTest : CIFuzzPluginTest() {
 
@@ -30,7 +31,7 @@ class MultiProjectTest : CIFuzzPluginTest() {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintBuildDir")?.outcome)
         assertThat(result.output, containsString("cifuzz.buildDir="))
-        assertThat(result.output, containsString("/module-c/build\n"))
+        assertThat(result.output, containsString(Paths.get("module-c", "build").toString()))
     }
 
     @Test
@@ -38,7 +39,7 @@ class MultiProjectTest : CIFuzzPluginTest() {
         val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintTestClasspath")?.outcome)
-        assertThat(result.output, containsString("build/classes/java/test"))
+        assertThat(result.output, containsString(Paths.get("build", "classes", "java", "test").toString()))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }
 
