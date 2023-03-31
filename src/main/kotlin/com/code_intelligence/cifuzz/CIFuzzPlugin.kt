@@ -24,7 +24,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
 
     private val isSupportedGradleVersion = GradleVersion.current() >= GradleVersion.version("6.1")
     private val isGradleVersionWithTestSuitesSupport = GradleVersion.current() >= GradleVersion.version("7.4")
-    private val jazzerVersion = "0.16.0"
+    private val jazzerVersion = "0.16.1"
     private val jazzerJUnit5TestTag = "jazzer"
 
     override fun apply(project: Project) {
