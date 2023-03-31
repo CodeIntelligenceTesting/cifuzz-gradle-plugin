@@ -17,6 +17,14 @@ class MultiProjectTest : CIFuzzPluginTest() {
     override fun cifuzzProjectDir() = File(projectDir, "module-c")
 
     @Test
+    fun `cifuzzPrintPluginVersion task can be called`() {
+        val result = runner("cifuzzPrintPluginVersion", "-q").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintPluginVersion")?.outcome)
+        // assertThat(result.output, containsString("cifuzz.plugin.version=")) - no version in testkit mode
+    }
+
+    @Test
     fun `cifuzzPrintBuildDir task can be called`() {
         val result = runner("cifuzzPrintBuildDir", "-q").build()
 
