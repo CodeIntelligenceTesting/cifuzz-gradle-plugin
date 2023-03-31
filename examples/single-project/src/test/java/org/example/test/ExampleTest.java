@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ExampleTest {
 
     @FuzzTest
-    public void testA(byte[] data) {
+    public void fuzzTest(byte[] data) {
         assertTrue(new ExampleLib().run());
     }
 }

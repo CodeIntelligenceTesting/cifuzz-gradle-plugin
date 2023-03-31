@@ -1,0 +1,11 @@
+plugins {
+    id 'com.code-intelligence.cifuzz'
+    id 'java-library'
+    id 'groovy'
+}
+
+repositories.mavenCentral()
+
+dependencies {
+    implementation localGroovy()
+}
