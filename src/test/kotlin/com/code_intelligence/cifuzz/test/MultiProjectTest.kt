@@ -44,6 +44,14 @@ class MultiProjectTest : CIFuzzPluginTest() {
     }
 
     @Test
+    fun `cifuzzPrintPackages task can be called`() {
+        val result = runner("cifuzzPrintPackages", "-q").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":module-c:cifuzzPrintPackages")?.outcome)
+        assertEquals(result.output.trim(), "cifuzz.packages=org.example.a,org.example.b,org.example.c")
+    }
+
+    @Test
     fun `cifuzzReport produces xml coverage report`() {
         val reportFile = File(projectDir, "module-c/build/reports/jacoco/cifuzzReport/cifuzzReport.xml")
 

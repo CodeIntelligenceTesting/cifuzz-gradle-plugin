@@ -3,10 +3,12 @@ package com.code_intelligence.cifuzz
 import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
 import com.code_intelligence.cifuzz.tasks.PluginVersionPrinter
 import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
+import com.code_intelligence.cifuzz.tasks.PackagesPrinter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.LibraryElements
+import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
@@ -52,6 +54,7 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         registerPrintCIFuzzPluginVersion()
         registerPrintBuildDir()
         registerPrintClasspath(cifuzz.testSourceSet)
+        registerPrintPackages(cifuzz.testSourceSet)
 
         // Automatically add dependencies to Jazzer
         addJazzerDependencies(cifuzz.testSourceSet)
@@ -91,6 +94,13 @@ abstract class CIFuzzPlugin : Plugin<Project> {
     private fun Project.registerPrintClasspath(testSourceSet: Provider<SourceSet>) {
         tasks.register("cifuzzPrintTestClasspath", ClasspathPrinter::class.java) { printClasspath ->
             printClasspath.testRuntimeClasspath.from(testSourceSet.get().runtimeClasspath)
+        }
+    }
+
+    private fun Project.registerPrintPackages(testSourceSet: Provider<SourceSet>) {
+        tasks.register("cifuzzPrintPackages", PackagesPrinter::class.java) { printClasspath ->
+            printClasspath.testRuntimeClasspath.from(mainSourceSet().output)
+            printClasspath.testRuntimeClasspath.from(classesFolderView(testSourceSet))
         }
     }
 
@@ -151,27 +161,14 @@ abstract class CIFuzzPlugin : Plugin<Project> {
                                                             testSourceSet: Provider<SourceSet>) {
         plugins.apply("jacoco")
 
-        val main = extensions.getByType(SourceSetContainer::class.java).getByName("main")
-
         // Directly register a JacocoReport task, as JacocoCoverageReport (see above) is not available in Gradle
         // versions older than 7.4.
         val reportTask = tasks.register("cifuzzReport", JacocoReport::class.java) { cifuzzReport ->
-            val testRuntimeClasspath = configurations.getByName(testSourceSet.get().runtimeClasspathConfigurationName)
-
-            // Get access to all 'classes' folders (compiled code) of dependencies through dependency management.
-            val classesFolders =
-                testRuntimeClasspath.incoming.artifactView { view ->
-                    view.componentFilter { id -> id is ProjectComponentIdentifier }
-                    view.attributes.attribute(
-                        LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(
-                            LibraryElements::class.java, LibraryElements.CLASSES
-                        )
-                    )
-                }.files
+            val classesFolders = classesFolderView(testSourceSet)
 
             // Add sources and classes (compiled code) from the CURRENT project
-            cifuzzReport.classDirectories.from(main.output)
-            cifuzzReport.sourceDirectories.from(main.java.srcDirs)
+            cifuzzReport.classDirectories.from(mainSourceSet().output)
+            cifuzzReport.sourceDirectories.from(mainSourceSet().java.srcDirs)
 
             // Add sources and classes (compiled code) from other projects the project depends on
             cifuzzReport.classDirectories.from(classesFolders)
@@ -215,6 +212,23 @@ abstract class CIFuzzPlugin : Plugin<Project> {
             }
         }
     }
+
+    private fun Project.classesFolderView(testSourceSet: Provider<SourceSet>): FileCollection {
+        val testRuntimeClasspath = configurations.getByName(testSourceSet.get().runtimeClasspathConfigurationName)
+
+        // Get access to all 'classes' folders (compiled code) of dependencies through dependency management.
+        return testRuntimeClasspath.incoming.artifactView { view ->
+                view.componentFilter { id -> id is ProjectComponentIdentifier }
+                view.attributes.attribute(
+                    LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(
+                        LibraryElements::class.java, LibraryElements.CLASSES
+                    )
+                )
+            }.files
+    }
+
+    private fun Project.mainSourceSet(): SourceSet =
+        extensions.getByType(SourceSetContainer::class.java).getByName("main")
 
     private fun Project.gradleProperty(name: String): String? = if (isGradleVersionWithTestSuitesSupport) {
         providers.gradleProperty(name).orNull
