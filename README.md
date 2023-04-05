@@ -1,4 +1,4 @@
-# CIFuzz Gradle plugin
+# CI Fuzz Gradle plugin
 
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FCodeIntelligenceTesting%2Fcifuzz-gradle-plugin%2Fbadge%3Fref%3Dmain&style=flat)](https://actions-badge.atrox.dev/CodeIntelligenceTesting/cifuzz-gradle-plugin/goto?ref=main)
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v?label=Plugin%20Portal&metadataUrl=https%3A%2F%2Fplugins.gradle.org%2Fm2%2Fcom%2Fcode-intelligence%2Fcifuzz%2Fcom.code-intelligence.cifuzz.gradle.plugin%2Fmaven-metadata.xml)](https://plugins.gradle.org/plugin/com.code-intelligence.cifuzz)
