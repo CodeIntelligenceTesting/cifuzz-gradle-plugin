@@ -12,12 +12,12 @@ import org.gradle.api.tasks.TaskAction
 abstract class PackagesPrinter : DefaultTask() {
 
     @get:InputFiles
-    abstract val testRuntimeClasspath: ConfigurableFileCollection
+    abstract val runtimeClasspath: ConfigurableFileCollection
 
     @TaskAction
     fun print() {
         val packages = sortedSetOf<String>()
-        testRuntimeClasspath.filter { it.isDirectory }.forEach { classesFolder ->
+        runtimeClasspath.filter { it.isDirectory }.forEach { classesFolder ->
             classesFolder.walk().filter { it.extension == "class" }.forEach { classFile ->
                 packages.add(classFile.parentFile.relativeTo(classesFolder).toPath().joinToString("."))
             }
