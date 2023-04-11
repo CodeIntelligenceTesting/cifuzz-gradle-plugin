@@ -19,7 +19,7 @@ abstract class CIFuzzPluginTest {
     fun setup() {
         File("examples/${example()}").copyRecursively(projectDir)
         File(projectDir, "settings.gradle.kts").let {
-            it.writeText(it.readText().replace("""pluginManagement { includeBuild("../..") }""", ""))
+            it.writeText(it.readText().replace("""includeBuild("../..")""", ""))
         }
         runner("clean")
     }
