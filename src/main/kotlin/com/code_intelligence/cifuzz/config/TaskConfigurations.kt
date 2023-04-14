@@ -1,6 +1,5 @@
 package com.code_intelligence.cifuzz.config
 
-import com.code_intelligence.cifuzz.CIFuzzExtension
 import com.code_intelligence.cifuzz.StandardJvmTestSetAccess
 import com.code_intelligence.cifuzz.TestSetAccess
 import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
@@ -13,8 +12,6 @@ import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.jacoco.plugins.JacocoCoverageReport

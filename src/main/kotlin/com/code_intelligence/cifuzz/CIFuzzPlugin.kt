@@ -1,5 +1,6 @@
 package com.code_intelligence.cifuzz
 
+import com.code_intelligence.cifuzz.android.registerCIFuzzAndroidExtensionAndConfigure
 import com.code_intelligence.cifuzz.config.configureCIFuzzPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -23,6 +24,10 @@ abstract class CIFuzzPlugin : Plugin<Project> {
         project.plugins.withId("java") {
             val cifuzz = project.registerCIFuzzExtension()
             project.configureCIFuzzPlugin(StandardJvmTestSetAccess(cifuzz))
+        }
+        project.plugins.withId("com.android.base") {
+            project.registerCIFuzzAndroidExtensionAndConfigure()
+            // the above registers a callback to 'configureCIFuzzPlugin(...)'
         }
     }
 
