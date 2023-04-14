@@ -7,7 +7,7 @@ plugins {
     id("com.code-intelligence.cifuzz") version "dev"
 }
 
-// cifuzz.androidVariant.set("release")
+// cifuzz.androidVariant.set("debug")
 
 repositories {
     mavenCentral()
@@ -35,13 +35,4 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-}
-
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
-    testImplementation("com.code-intelligence:jazzer-junit:0.15.0")
 }
