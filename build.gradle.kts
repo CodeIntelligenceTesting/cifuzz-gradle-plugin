@@ -25,10 +25,24 @@ gradlePlugin {
     }
 }
 
+configurations.compileClasspath {
+    // Allow Java 11 dependencies on compile classpath
+    attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11)
+}
+dependencies {
+    compileOnly("com.android.tools.build:gradle:7.4.2")
+}
+
 testing.suites.named<JvmTestSuite>("test") {
     useJUnitJupiter()
     dependencies {
         implementation("org.hamcrest:hamcrest:2.2")
+    }
+    targets.all {
+        testTask {
+            // Android testing requires Java 11
+            javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+        }
     }
 }
 
@@ -38,7 +52,7 @@ testedGradleVersions.forEach { gradleVersionUnderTest ->
         description = "Runs tests against Gradle $gradleVersionUnderTest"
         testClassesDirs = sourceSets.test.get().output.classesDirs
         classpath = sourceSets.test.get().runtimeClasspath
-        useJUnitPlatform()
+        useJUnitPlatform { excludeTags = setOf("android") }
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
     }
     tasks.check {
