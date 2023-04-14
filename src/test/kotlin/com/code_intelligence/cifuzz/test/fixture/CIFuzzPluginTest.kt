@@ -19,7 +19,7 @@ abstract class CIFuzzPluginTest {
     fun setup() {
         File("examples/${example()}").copyRecursively(projectDir)
         File(projectDir, "settings.gradle.kts").let {
-            it.writeText(it.readText().replace("""includeBuild("../..")""", ""))
+            it.writeText(it.readText().replace("""includeBuild("../..")""", """repositories.maven("${File("build/pluginUnderTestRepo").absolutePath}")"""))
         }
         runner("clean")
     }
@@ -28,7 +28,6 @@ abstract class CIFuzzPluginTest {
         val gradleVersionUnderTest: String? = System.getProperty("gradleVersionUnderTest")
         return GradleRunner.create()
             .forwardOutput()
-            .withPluginClasspath()
             .withProjectDir(cifuzzProjectDir())
             .withArguments(args.toList() + listOf("-s"))
             .withDebug(ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")).also {

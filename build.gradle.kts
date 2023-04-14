@@ -46,6 +46,9 @@ testedGradleVersions.forEach { gradleVersionUnderTest ->
     }
 }
 
+publishing.repositories.maven(layout.buildDirectory.dir("pluginUnderTestRepo"))
+
 tasks.withType<Test>().configureEach {
+    dependsOn(tasks.publish)
     maxParallelForks = 4
 }

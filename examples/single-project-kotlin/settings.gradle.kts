@@ -1,1 +1,4 @@
-pluginManagement { includeBuild("../..") }
+pluginManagement {
+    includeBuild("../..")
+    repositories.gradlePluginPortal()
+}
