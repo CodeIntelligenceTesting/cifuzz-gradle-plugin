@@ -4,6 +4,7 @@ plugins {
 
 dependencyResolutionManagement {
     repositories.gradlePluginPortal()
+    repositories.google()
 }
 
 gradleEnterprise {
