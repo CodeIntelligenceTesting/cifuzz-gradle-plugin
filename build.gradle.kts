@@ -5,6 +5,8 @@ plugins {
 
 // Versions to test in addition to the version used to build the plugin (gradle/wrapper/gradle-wrapper.properties)
 val testedGradleVersions = listOf("6.1.1", "7.0.2", "7.3.3", "7.4.2", "7.5.1", "7.6.1")
+// Versions for which the Android support, which is not available for older Gradle versions, is tested
+val testedGradleVersionsAndroid = listOf("7.5.1", "7.6.1")
 
 group = "com.code-intelligence"
 version = providers.gradleProperty("pluginVersion").getOrElse("dev")
@@ -52,8 +54,13 @@ testedGradleVersions.forEach { gradleVersionUnderTest ->
         description = "Runs tests against Gradle $gradleVersionUnderTest"
         testClassesDirs = sourceSets.test.get().output.classesDirs
         classpath = sourceSets.test.get().runtimeClasspath
-        useJUnitPlatform { excludeTags = setOf("android") }
         systemProperty("gradleVersionUnderTest", gradleVersionUnderTest)
+        if (testedGradleVersionsAndroid.contains(gradleVersionUnderTest)) {
+            javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(11)) })
+            useJUnitPlatform()
+        } else {
+            useJUnitPlatform { excludeTags = setOf("android") }
+        }
     }
     tasks.check {
         dependsOn(testGradle)
