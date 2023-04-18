@@ -27,7 +27,7 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzPrintBuildDir")?.outcome)
         assertThat(result.output, containsString("cifuzz.buildDir="))
-        assertThat(result.output, containsString("/app/build\n"))
+        assertThat(result.output, containsString(File("app/build").path))
     }
 
     @Test
@@ -35,7 +35,7 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
         val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzPrintTestClasspath")?.outcome)
-        assertThat(result.output, containsString("app/build/tmp/kotlin-classes/${testedAndroidVariant()}UnitTest"))
+        assertThat(result.output, containsString(File("app/build/tmp/kotlin-classes/${testedAndroidVariant()}UnitTest").path))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }
 

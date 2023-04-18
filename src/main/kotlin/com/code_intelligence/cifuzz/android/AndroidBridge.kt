@@ -1,7 +1,6 @@
 package com.code_intelligence.cifuzz.android
 
 import com.android.build.api.variant.AndroidComponentsExtension
-import com.android.build.api.variant.AndroidTest
 import com.android.build.api.variant.UnitTest
 import com.code_intelligence.cifuzz.config.configureCIFuzzPlugin
 import org.gradle.api.Project
@@ -10,11 +9,11 @@ import java.util.Locale
 internal fun Project.registerCIFuzzAndroidExtensionAndConfigure() {
     extensions.create("cifuzz", CIFuzzAndroidExtension::class.java).apply {
         androidVariant.convention("release")
-        androidTest.convention(false) // false == UnitTest
+        // androidTest.convention(false) // false == UnitTest
         extensions.getByType(AndroidComponentsExtension::class.java).onVariants { variant ->
             if (variant.name == androidVariant.get()) {
-                configureCIFuzzPlugin(AndroidTestSetAccess(project, variant,
-                    if (androidTest.get()) AndroidTest::class.java else UnitTest::class.java))
+                configureCIFuzzPlugin(AndroidTestSetAccess(project, variant, UnitTest::class.java))
+                    // if (androidTest.get()) AndroidTest::class.java else UnitTest::class.java))
 
                 tasks.configureEach {
                     val unitTest = variant.unitTest
