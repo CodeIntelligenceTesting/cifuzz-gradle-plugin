@@ -18,8 +18,8 @@ abstract class CIFuzzPluginTest {
     @BeforeEach
     fun setup() {
         File("examples/${example()}").copyRecursively(projectDir)
-        File(projectDir, "settings.gradle.kts").let {
-            it.writeText(it.readText().replace("""includeBuild("../..")""", """repositories.maven("${File("build/pluginUnderTestRepo").absolutePath}")"""))
+        File(projectDir, "settings.gradle.kts").apply {
+            writeText(readText().replace("""includeBuild("../..")""", """repositories.maven("${File("build/pluginUnderTestRepo").absolutePath}")"""))
         }
         runner("clean")
     }
