@@ -9,7 +9,6 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
-import org.gradle.configurationcache.extensions.capitalized
 
 class AndroidTestSetAccess(
     private val project: Project,
