@@ -1,7 +1,7 @@
 package com.code_intelligence.cifuzz.test
 
+import com.code_intelligence.cifuzz.android.capitalized
 import com.code_intelligence.cifuzz.test.fixture.CIFuzzPluginTest
-import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.testkit.runner.TaskOutcome
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString

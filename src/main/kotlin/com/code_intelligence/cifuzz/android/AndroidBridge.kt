@@ -5,9 +5,9 @@ import com.android.build.api.variant.AndroidTest
 import com.android.build.api.variant.UnitTest
 import com.code_intelligence.cifuzz.config.configureCIFuzzPlugin
 import org.gradle.api.Project
-import org.gradle.configurationcache.extensions.capitalized
+import java.util.Locale
 
-fun Project.registerCIFuzzAndroidExtensionAndConfigure() {
+internal fun Project.registerCIFuzzAndroidExtensionAndConfigure() {
     project.extensions.create("cifuzz", CIFuzzAndroidExtension::class.java).apply {
         androidVariant.convention("release")
         androidTest.convention(false) // false == UnitTest
@@ -27,3 +27,14 @@ fun Project.registerCIFuzzAndroidExtensionAndConfigure() {
         }
     }
 }
+
+internal fun CharSequence.capitalized(): String =
+    when {
+        isEmpty() -> ""
+        else -> get(0).let { initial ->
+            when {
+                initial.isLowerCase() -> initial.titlecase(Locale.getDefault()) + substring(1)
+                else -> toString()
+            }
+        }
+    }
