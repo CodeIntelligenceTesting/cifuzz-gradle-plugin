@@ -5,10 +5,10 @@ import com.android.build.api.variant.UnitTest
 import com.android.build.api.variant.Variant
 import com.code_intelligence.cifuzz.TestSetAccess
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.testing.Test
 
 class AndroidTestSetAccess(
     private val project: Project,
@@ -16,7 +16,8 @@ class AndroidTestSetAccess(
     private val testType: Class<out TestComponent>
 ) : TestSetAccess {
 
-    private fun testComponent() = selectedVariant.nestedComponents.find { testType.isAssignableFrom(it.javaClass) }!! // TODO give proper error if tests of given type do not exist
+    private fun testComponent() = selectedVariant.nestedComponents.find { testType.isAssignableFrom(it.javaClass) } ?:
+        throw RuntimeException("Variant '${selectedVariant.name}' does not have tests of type '${testType.simpleName}'")
 
     private fun testConfigurationPrefix() = if (testType == UnitTest::class.java) "test" else "androidTest"
 
@@ -42,6 +43,6 @@ class AndroidTestSetAccess(
     override val mainSources: FileCollection
         get() = project.objects.fileCollection().from(selectedVariant.sources.java?.all, selectedVariant.sources.kotlin?.all)
 
-    override val testTask: Provider<Test>
-        get() = project.provider { project.tasks.named("${testTaskPrefix()}${testComponent().name.capitalized()}", Test::class.java) }.flatMap { it }
+    override val testTask: Provider<out Task>
+        get() = project.provider { project.tasks.named("${testTaskPrefix()}${testComponent().name.capitalized()}") }.flatMap { it }
 }
