@@ -1,17 +1,17 @@
-package com.code_intelligence.cifuzz.test
+package com.code_intelligence.cifuzz.test.android
 
 import org.junit.jupiter.api.BeforeEach
 import java.io.File
 
 
-class MultiProjectAndroidAppDemoDebugVariantTest : MultiProjectAndroidTest() {
+class MultiProjectAndroidLibDemoReleaseVariantTest : MultiProjectAndroidTest() {
 
-    override fun testedAndroidVariant() = "demoDebug"
+    override fun testedAndroidVariant() = "demoRelease"
 
     @BeforeEach
     fun adjustSample() {
         File(projectDir, "app/build.gradle.kts").appendText("""
-            cifuzz.androidVariant.set("demoDebug")    
+            cifuzz.androidVariant.set("demoRelease")    
             
             android {
                 flavorDimensions += "version"

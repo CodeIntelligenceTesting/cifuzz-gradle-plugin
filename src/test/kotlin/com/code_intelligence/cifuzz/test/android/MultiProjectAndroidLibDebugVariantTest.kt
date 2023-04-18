@@ -1,10 +1,10 @@
-package com.code_intelligence.cifuzz.test
+package com.code_intelligence.cifuzz.test.android
 
 import org.junit.jupiter.api.BeforeEach
 import java.io.File
 
 
-class MultiProjectAndroidAppDebugVariantTest : MultiProjectAndroidTest() {
+class MultiProjectAndroidLibDebugVariantTest : MultiProjectAndroidLibTest() {
 
     override fun testedAndroidVariant() = "debug"
 

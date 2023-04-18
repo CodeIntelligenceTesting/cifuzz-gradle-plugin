@@ -1,4 +1,4 @@
-package com.code_intelligence.cifuzz.test
+package com.code_intelligence.cifuzz.test.android
 
 import com.code_intelligence.cifuzz.android.capitalized
 import com.code_intelligence.cifuzz.test.fixture.CIFuzzPluginTest
