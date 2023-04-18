@@ -1,8 +1,8 @@
 package com.code_intelligence.cifuzz
 
+import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.testing.Test
 
 class StandardJvmTestSetAccess(
     private val ciFuzz: CIFuzzExtension
@@ -26,6 +26,6 @@ class StandardJvmTestSetAccess(
     override val mainSources: FileCollection
         get() = ciFuzz.mainSourceSet.get().allSource.sourceDirectories
 
-    override val testTask: Provider<Test>
+    override val testTask: Provider<out Task>
         get() = ciFuzz.testTask
 }

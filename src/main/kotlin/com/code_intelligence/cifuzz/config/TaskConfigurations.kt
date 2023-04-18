@@ -7,6 +7,7 @@ import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
 import com.code_intelligence.cifuzz.tasks.PackagesPrinter
 import com.code_intelligence.cifuzz.tasks.PluginVersionPrinter
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.file.FileCollection
@@ -92,7 +93,7 @@ private fun Project.addJazzerDependencies(testSetAccess: TestSetAccess) {
     }
 }
 
-private fun Project.reconfigureTestTasks(testTaskProvider: Provider<Test>, fuzzTestFilter: String) {
+private fun Project.reconfigureTestTasks(testTaskProvider: Provider<out Task>, fuzzTestFilter: String) {
     tasks.withType(Test::class.java).configureEach { testTask ->
         // Only configure the test task that runs the fuzz tests
         if (testTask == testTaskProvider.get()) {
@@ -113,7 +114,7 @@ private fun Project.reconfigureTestTasks(testTaskProvider: Provider<Test>, fuzzT
     }
 }
 
-private fun Project.registerCoverageReportingTask(testTask: Provider<Test>) {
+private fun Project.registerCoverageReportingTask(testTask: Provider<out Task>) {
     plugins.apply("jacoco-report-aggregation") // This plugin was added in Gradle 7.4
 
     val reporting = extensions.getByType(ReportingExtension::class.java)
@@ -157,7 +158,7 @@ private fun Project.registerCoverageReportingTaskLegacy(testSetAccess: TestSetAc
 }
 
 private fun Project.configureJacocoReportTask(reportTask: TaskProvider<JacocoReport>,
-                                              testTask: Provider<Test>
+                                              testTask: Provider<out Task>
 ) {
     reportTask.configure { cifuzzReport ->
         // Take the execution data from the fuzz test task.

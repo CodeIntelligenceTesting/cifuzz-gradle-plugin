@@ -1,8 +1,8 @@
 package com.code_intelligence.cifuzz
 
+import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.testing.Test
 
 interface TestSetAccess {
     val testRuntimeClasspath: FileCollection
@@ -11,5 +11,5 @@ interface TestSetAccess {
     val testRuntimeClasspathConfigurationName: String
     val mainClasses: FileCollection
     val mainSources: FileCollection
-    val testTask: Provider<Test>
+    val testTask: Provider<out Task>
 }
