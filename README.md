@@ -20,7 +20,10 @@ plugins {
 }
 ```
 
-The minimum supported Gradle version is **Gradle 6.1**.
+## Compatibility
+
+- For JVM (Java, Kotlin, ...) projects, the minimum supported Gradle version is **Gradle 6.1**
+- For Android projects, 7.5 (Android Gradle Plugin 7.4) or 8.0 (Android Gradle Plugin 8.0) are the minimum supported Gradle version
 
 ## Writing fuzz tests with Jazzer and JUnit 5
 
@@ -32,6 +35,8 @@ You can then use the [cifuzz](https://github.com/CodeIntelligenceTesting/cifuzz)
 
 By default, the plugin expects all fuzz tests to be in the default test sources set, which is usually located in `src/test`.
 If the tests are in a separate test source set – or test suite – you have to configure that.
+
+### Standard JVM (Java, Kotlin, ...) projects
 
 If you use [test suites](https://docs.gradle.org/current/userguide/jvm_test_suite_plugin.html) (available since Gradle 7.4) you can do the configuration as follows:
 ```kotlin
@@ -57,3 +62,13 @@ cifuzz {
 }
 ```
 
+### Android projects
+
+In Android projects, you can configure the _androidVariant_ (default is `release`) and if the fuzz tests are Android device tests (and not a unit tests, which is the default).
+
+```kotlin
+cifuzz {
+    androidVariant.set("fullDebug") // Set to variant for flavor=full and buildType=debug 
+    androidTest.set(true) // The fuzz tests are in 'androidTest' and not in 'test' 
+}
+```
