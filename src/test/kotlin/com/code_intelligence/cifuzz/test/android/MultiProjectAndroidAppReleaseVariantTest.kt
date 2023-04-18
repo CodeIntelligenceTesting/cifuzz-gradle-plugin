@@ -1,4 +1,4 @@
-package com.code_intelligence.cifuzz.test
+package com.code_intelligence.cifuzz.test.android
 
 
 class MultiProjectAndroidAppReleaseVariantTest : MultiProjectAndroidTest() {
