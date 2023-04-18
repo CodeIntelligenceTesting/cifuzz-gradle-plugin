@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 
-
 class ExampleUnitTest {
 
     @FuzzTest
@@ -14,7 +13,7 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun addition_isCorrect() {
+    fun unitTest() {
         assertEquals(4, 2 + 2)
     }
 }

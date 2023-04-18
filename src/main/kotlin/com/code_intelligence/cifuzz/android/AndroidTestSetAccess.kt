@@ -5,6 +5,7 @@ import com.android.build.api.variant.UnitTest
 import com.android.build.api.variant.Variant
 import com.code_intelligence.cifuzz.TestSetAccess
 import org.gradle.api.Project
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
@@ -23,7 +24,9 @@ class AndroidTestSetAccess(
     private fun testTaskPrefix() = if (testType == UnitTest::class.java) "test" else "connected"
 
     override val testRuntimeClasspath: FileCollection
-        get() = (testComponent().compileClasspath + testComponent().runtimeConfiguration)
+        get() = (testComponent().compileClasspath + testComponent().runtimeConfiguration.incoming.artifactView {
+            it.attributes.attribute(Attribute.of("artifactType", String::class.java), "android-classes-jar")
+        }.files)
 
     override val testImplementationConfigurationName: String
         get() = "${testConfigurationPrefix()}Implementation"
