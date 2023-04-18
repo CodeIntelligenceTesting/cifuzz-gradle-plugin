@@ -17,9 +17,13 @@ abstract class CIFuzzPluginTest {
 
     @BeforeEach
     fun setup() {
+        val androidVersion: String = System.getProperty("androidPluginVersionUnderTest") ?: "7.4.2"
+
         File("examples/${example()}").copyRecursively(projectDir)
         File(projectDir, "settings.gradle.kts").apply {
-            writeText(readText().replace("""includeBuild("../..")""", """repositories.maven("${File("build/pluginUnderTestRepo").absolutePath}")"""))
+            writeText(readText()
+                .replace("""includeBuild("../..")""", """repositories.maven("${File("build/pluginUnderTestRepo").absolutePath}")""")
+                .replace("7.4.2", androidVersion))
         }
         runner("clean")
     }
