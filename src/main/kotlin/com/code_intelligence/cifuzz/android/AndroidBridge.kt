@@ -14,17 +14,6 @@ internal fun Project.registerCIFuzzAndroidExtensionAndConfigure() {
             if (variant.name == androidVariant.get()) {
                 configureCIFuzzPlugin(AndroidTestSetAccess(project, variant, UnitTest::class.java))
                     // if (androidTest.get()) AndroidTest::class.java else UnitTest::class.java))
-
-                tasks.configureEach {
-                    val unitTest = variant.unitTest
-                    if (unitTest != null && it.name == "compile${unitTest.name.capitalized()}Kotlin") {
-                        val bundleClassesToCompileJarTask = "bundle${variant.name.capitalized()}ClassesToCompileJar"
-                        if (tasks.names.contains(bundleClassesToCompileJarTask)) {
-                            // TODO figure out why 'cifuzzPrintTestClasspath' causes an error without this
-                            it.dependsOn(tasks.named(bundleClassesToCompileJarTask))
-                        }
-                    }
-                }
             }
         }
     }
