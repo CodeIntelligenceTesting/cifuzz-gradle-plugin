@@ -64,11 +64,10 @@ cifuzz {
 
 ### Android projects
 
-In Android projects, you can configure the _androidVariant_ (default is `release`) and if the fuzz tests are Android device tests (and not a unit tests, which is the default).
+In Android projects, you can configure the _androidVariant_ for which to run the fuzz tests (default is `release`).
 
 ```kotlin
 cifuzz {
     androidVariant.set("fullDebug") // Set to variant for flavor=full and buildType=debug 
-    androidTest.set(true) // The fuzz tests are in 'androidTest' and not in 'test' 
 }
 ```
