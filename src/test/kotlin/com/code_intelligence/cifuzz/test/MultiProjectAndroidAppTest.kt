@@ -29,7 +29,7 @@ class MultiProjectAndroidAppTest : CIFuzzPluginTest() {
 
     @Test
     fun `cifuzzPrintTestClasspath task can be called`() {
-        val result = runner("cifuzzPrintTestClasspath", "-a").build()
+        val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzPrintTestClasspath")?.outcome)
         assertThat(result.output, containsString("app/build/tmp/kotlin-classes/releaseUnitTest"))
@@ -44,8 +44,11 @@ class MultiProjectAndroidAppTest : CIFuzzPluginTest() {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzReport")?.outcome)
         assertTrue(reportFile.exists())
-        assertThat(reportFile.readText(), containsString("""<class name="org/example/MainFeature" sourcefilename="MainFeature.kt">"""))
-        assertThat(reportFile.readText(), containsString("""<class name="org/example/MainActivity" sourcefilename="MainActivity.kt">"""))
+        reportFile.readText().apply {
+            assertThat(this, containsString("""<class name="org/example/MainFeature" sourcefilename="MainFeature.kt">"""))
+            assertThat(this, containsString("""<class name="org/example/MainActivity" sourcefilename="MainActivity.kt">"""))
+            assertThat(this, containsString("""<class name="org/example/lib/Lib" sourcefilename="Lib.kt">"""))
+        }
     }
 
     @Test

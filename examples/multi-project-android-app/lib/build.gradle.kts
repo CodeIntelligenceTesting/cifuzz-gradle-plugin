@@ -1,21 +1,15 @@
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("com.code-intelligence.cifuzz") version "dev"
 }
 
-// cifuzz.androidVariant.set("debug")
-
 android {
-    namespace = "org.example"
+    namespace = "org.example.lib"
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "org.example"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -27,8 +21,4 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
-
-dependencies {
-    implementation(project(":lib"))
 }
