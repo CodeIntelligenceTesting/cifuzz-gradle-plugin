@@ -21,6 +21,10 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
 
     override fun cifuzzProjectDir() = File(projectDir, "app")
 
+    open fun languageFileExt() = "kt"
+
+    open fun languageTestClassesPath() = "tmp/kotlin-classes"
+
     @Test
     fun `cifuzzPrintBuildDir task can be called`() {
         val result = runner("cifuzzPrintBuildDir", "-q").build()
@@ -35,7 +39,7 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
         val result = runner("cifuzzPrintTestClasspath", "-q").build()
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzPrintTestClasspath")?.outcome)
-        assertThat(result.output, containsString(File("app/build/tmp/kotlin-classes/${testedAndroidVariant()}UnitTest").path))
+        assertThat(result.output, containsString(File("app/build/${languageTestClassesPath()}/${testedAndroidVariant()}UnitTest").path))
         assertThat(result.output, containsString("cifuzz.test.classpath="))
     }
 
@@ -48,9 +52,9 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
         assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzReport")?.outcome)
         assertTrue(reportFile.exists())
         reportFile.readText().apply {
-            assertThat(this, containsString("""<class name="org/example/MainFeature" sourcefilename="MainFeature.kt">"""))
-            assertThat(this, containsString("""<class name="org/example/MainActivity" sourcefilename="MainActivity.kt">"""))
-            assertThat(this, containsString("""<class name="org/example/lib/Lib" sourcefilename="Lib.kt">"""))
+            assertThat(this, containsString("""<class name="org/example/MainFeature" sourcefilename="MainFeature.${languageFileExt()}">"""))
+            assertThat(this, containsString("""<class name="org/example/MainActivity" sourcefilename="MainActivity.${languageFileExt()}">"""))
+            assertThat(this, containsString("""<class name="org/example/lib/Lib" sourcefilename="Lib.${languageFileExt()}">"""))
         }
     }
 
