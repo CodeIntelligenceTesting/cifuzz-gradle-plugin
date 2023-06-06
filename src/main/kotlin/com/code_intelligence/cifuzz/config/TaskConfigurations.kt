@@ -22,7 +22,7 @@ import org.gradle.util.GradleVersion
 import java.io.File
 
 private val isGradleVersionWithTestSuitesSupport = GradleVersion.current() >= GradleVersion.version("7.4")
-private const val JAZZER_VERSION = "0.16.1"
+private const val JAZZER_VERSION = "0.17.1"
 private const val JAZZER_JUNIT5_TEST_TAG = "jazzer"
 
 internal fun Project.configureCIFuzzPlugin(testSetAccess: TestSetAccess) {
