@@ -28,4 +28,7 @@ class StandardJvmTestSetAccess(
 
     override val testTask: Provider<out Task>
         get() = ciFuzz.testTask
+
+    override val testSources: FileCollection
+        get() = ciFuzz.testSourceSet.get().allSource.sourceDirectories
 }

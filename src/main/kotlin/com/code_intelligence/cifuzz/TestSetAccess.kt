@@ -12,4 +12,5 @@ interface TestSetAccess {
     val mainClasses: FileCollection
     val mainSources: FileCollection
     val testTask: Provider<out Task>
+    val testSources: FileCollection
 }

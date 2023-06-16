@@ -48,4 +48,7 @@ class AndroidTestSetAccess(
 
     override val testTask: Provider<out Task>
         get() = project.provider { project.tasks.named("${testTaskPrefix()}${testComponent().name.capitalized()}") }.flatMap { it }
+
+    override val testSources: FileCollection
+        get() = project.objects.fileCollection().from(testComponent().sources.java?.all, testComponent().sources.kotlin?.all)
 }

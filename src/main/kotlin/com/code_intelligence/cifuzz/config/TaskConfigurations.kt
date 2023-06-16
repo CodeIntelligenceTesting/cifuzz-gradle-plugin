@@ -2,10 +2,7 @@ package com.code_intelligence.cifuzz.config
 
 import com.code_intelligence.cifuzz.StandardJvmTestSetAccess
 import com.code_intelligence.cifuzz.TestSetAccess
-import com.code_intelligence.cifuzz.tasks.BuildDirectoryPrinter
-import com.code_intelligence.cifuzz.tasks.ClasspathPrinter
-import com.code_intelligence.cifuzz.tasks.PackagesPrinter
-import com.code_intelligence.cifuzz.tasks.PluginVersionPrinter
+import com.code_intelligence.cifuzz.tasks.*
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
@@ -33,6 +30,7 @@ internal fun Project.configureCIFuzzPlugin(testSetAccess: TestSetAccess) {
     registerPrintBuildDir()
     registerPrintClasspath(testSetAccess)
     registerPrintPackages(testSetAccess)
+    registerPrintTestSourceSets(testSetAccess)
 
     // Automatically add dependencies to Jazzer
     addJazzerDependencies(testSetAccess)
@@ -72,6 +70,12 @@ private fun Project.registerPrintPackages(testSetAccess: TestSetAccess) {
     tasks.register("cifuzzPrintPackages", PackagesPrinter::class.java) { printClasspath ->
         printClasspath.runtimeClasspath.from(testSetAccess.mainClasses)
         printClasspath.runtimeClasspath.from(classesFolderView(testSetAccess))
+    }
+}
+
+private fun Project.registerPrintTestSourceSets(testSetAccess: TestSetAccess) {
+    tasks.register("cifuzzPrintTestSourceFolders", TestSourceSetsPrinter::class.java) { printTestSourceSets ->
+        printTestSourceSets.testSourceSets.from(testSetAccess.testSources)
     }
 }
 
