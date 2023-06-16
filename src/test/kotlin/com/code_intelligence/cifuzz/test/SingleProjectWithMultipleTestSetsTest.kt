@@ -35,4 +35,12 @@ class SingleProjectWithMultipleTestSetsTest : CIFuzzPluginTest() {
         assertThat(reportFile.readText(), containsString("""<class name="org/example/ExampleLib" sourcefilename="ExampleLib.java">"""))
         assertThat(reportFile.readText(), containsString("""<class name="org/example/ExampleApp" sourcefilename="ExampleApp.java">"""))
     }
+
+    @Test
+    fun `cifuzzPrintTestSourceFolders returns custom test source sets`() {
+        val result = runner("cifuzzPrintTestSourceFolders", "-q").build()
+        assertThat(result.output, containsString("src${File.separator}fuzzTest"))
+        assertThat(result.output, containsString("src${File.separator}fuzzTest"))
+        assertThat(result.output, containsString("cifuzz.test.source-folders="))
+    }
 }

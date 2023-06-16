@@ -70,4 +70,13 @@ abstract class MultiProjectAndroidTest : CIFuzzPluginTest() {
         assertThat(reportFile.readText(), containsString(""">fuzzTest(byte[])[1]<"""))
         assertThat(reportFile.readText(), not(containsString(""">unitTest()<""")))
     }
+
+    @Test
+    fun `cifuzzPrintTestSourceFolders returns default test source set`() {
+        val result = runner("cifuzzPrintTestSourceFolders", "-q").build()
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":app:cifuzzPrintTestSourceFolders")?.outcome)
+        assertThat(result.output, containsString(File("src/test${testedAndroidVariant().capitalized()}/").path))
+        assertThat(result.output, containsString("cifuzz.test.source-folders="))
+    }
 }
